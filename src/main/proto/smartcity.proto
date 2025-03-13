@@ -1,0 +1,52 @@
+syntax = "proto3";
+option java_package = "com.smartcity";
+option java_multiple_files = true;
+
+// ====== Service Discovery ======
+service Registry {
+  rpc Register(ServiceInfo) returns (Confirmation);        // Simple RPC
+  rpc DiscoverServices(ServiceFilter) returns (stream ServiceInfo); // Server Streaming
+}
+
+message ServiceInfo {
+  string service_type = 1;  // "TRAFFIC"/"BIN"/"NOISE"
+  string service_id = 2;
+  string address = 3;       // IP:Port
+}
+
+// ====== Traffic Service ======
+service Traffic {
+  // Simple RPC
+  rpc SetLight(LightCommand) returns (Response);
+  // Server Streaming
+  rpc StreamTraffic(Empty) returns (stream TrafficData);
+}
+
+message LightCommand {
+  string intersection = 1;
+  string color = 2;  // RED/YELLOW/GREEN
+}
+
+// ====== Bin Service ======
+service Bin {
+  // Client Streaming
+  rpc ReportBins(stream BinStatus) returns (Summary);
+  // Simple RPC
+  rpc GetRoute(Zone) returns (Route);
+}
+
+message BinStatus {
+  string bin_id = 1;
+  int32 fill_percent = 2;  // 0-100
+}
+
+// ====== Noise Service ======
+service Noise {
+  // Bidirectional Streaming
+  rpc MonitorNoise(stream NoiseData) returns (stream Alert);
+}
+
+message NoiseData {
+  string sensor_id = 1;
+  float decibels = 2;
+}
