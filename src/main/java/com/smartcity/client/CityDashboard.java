@@ -1,5 +1,14 @@
-package com.smartcity.client;
+/**
+ * Smart City Monitoring Dashboard - JavaFX Client Application
+ * Provides four main functional modules:
+ * 1. Traffic light control
+ * 2. Bin status monitoring
+ * 3. Noise level tracking
+ * 4. Service discovery management
+ */
 
+
+package com.smartcity.client;
 import com.smartcity.*;
 import com.smartcity.Alert;
 import io.grpc.ManagedChannel;
@@ -14,15 +23,18 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.util.concurrent.TimeUnit;
 
 
 public class CityDashboard extends Application {
+    // gRPC communication channel
     private ManagedChannel channel;
+    // Service registry stub
     private RegistryGrpc.RegistryBlockingStub registryStub;
+    // Observable list for service discovery UI
     private final ObservableList<String> serviceList = FXCollections.observableArrayList();
 
+    /** Initialize gRPC communication channel */
     public CityDashboard() {
         channel = ManagedChannelBuilder.forAddress("localhost", 50051)
                 .usePlaintext()
@@ -195,16 +207,25 @@ public class CityDashboard extends Application {
         return new Tab("Services", new VBox(10, refreshBtn, serviceListView));
     }
 
-    //
+    /**
+     * Refresh service list (thread-safe implementation)
+     * Workflow:
+     * 1. Clear current list (FX thread)
+     * 2. Fetch services asynchronously
+     * 3. Update UI (FX thread)
+     */
+
     private void refreshServices() {
         new Thread(() -> {
             try {
 //                serviceList.clear(); // clear old data
+                // Must modify ObservableList in FX thread
+
                 Platform.runLater(() -> serviceList.clear());
 
+                // Execute gRPC discovery call
                 registryStub.discoverServices(ServiceFilter.newBuilder().build())
                         .forEachRemaining(service ->
-
                                 Platform.runLater(() ->
                                         serviceList.add(
                                                 service.getServiceType() + " @ " + service.getAddress()
