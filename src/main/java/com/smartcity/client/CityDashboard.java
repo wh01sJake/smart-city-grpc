@@ -11,9 +11,7 @@
 package com.smartcity.client;
 import com.smartcity.*;
 import com.smartcity.Alert;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -38,6 +36,21 @@ public class CityDashboard extends Application {
     public CityDashboard() {
         channel = ManagedChannelBuilder.forAddress("localhost", 50051)
                 .usePlaintext()
+                .intercept(new ClientInterceptor() {
+                    @Override
+                    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+                            MethodDescriptor<ReqT, RespT> method,
+                            CallOptions callOptions,
+                            Channel next) {
+                        return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
+                            @Override
+                            public void start(Listener<RespT> responseListener, Metadata headers) {
+                                headers.put(Metadata.Key.of("apikey", Metadata.ASCII_STRING_MARSHALLER), "smartcityjake");
+                                super.start(responseListener, headers);
+                            }
+                        };
+                    }
+                })
                 .build();
         registryStub = RegistryGrpc.newBlockingStub(channel);
     }
@@ -61,12 +74,41 @@ public class CityDashboard extends Application {
     private Tab createTrafficTab() {
         Button redBtn = new Button("Set Red Light");
         Button greenBtn = new Button("Set Green Light");
+        Button streamBtn = new Button("Start Traffic Stream");
         TextArea trafficLog = new TextArea();
+        TextArea trafficStream = new TextArea();
 
         redBtn.setOnAction(e -> setTrafficLight("RED", trafficLog));
         greenBtn.setOnAction(e -> setTrafficLight("GREEN", trafficLog));
+        streamBtn.setOnAction(e -> startTrafficStream(trafficStream));
 
-        return new Tab("Traffic", new VBox(10, redBtn, greenBtn, trafficLog));
+        return new Tab("Traffic", new VBox(10, redBtn, greenBtn, streamBtn, trafficLog, trafficStream));
+    }
+
+    private void startTrafficStream(TextArea log) {
+        TrafficGrpc.TrafficStub stub = TrafficGrpc.newStub(channel);
+        stub.streamTraffic(Empty.newBuilder().build(), new StreamObserver<TrafficData>() {
+            @Override
+            public void onNext(TrafficData data) {
+                Platform.runLater(() ->
+                        log.appendText("Vehicles: " + data.getVehicleCount() + " at " + data.getTimestamp() + "\n")
+                );
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                Platform.runLater(() ->
+                        log.appendText("Stream error: " + t.getMessage() + "\n")
+                );
+            }
+
+            @Override
+            public void onCompleted() {
+                Platform.runLater(() ->
+                        log.appendText("Traffic stream ended\n")
+                );
+            }
+        });
     }
 
     private void setTrafficLight(String color, TextArea log) {
@@ -218,13 +260,12 @@ public class CityDashboard extends Application {
     private void refreshServices() {
         new Thread(() -> {
             try {
-//                serviceList.clear(); // clear old data
-                // Must modify ObservableList in FX thread
-
                 Platform.runLater(() -> serviceList.clear());
 
-                // Execute gRPC discovery call
-                registryStub.discoverServices(ServiceFilter.newBuilder().build())
+                // Explicitly build an empty filter to get all services
+                ServiceFilter filter = ServiceFilter.newBuilder().build();
+
+                registryStub.discoverServices(filter)
                         .forEachRemaining(service ->
                                 Platform.runLater(() ->
                                         serviceList.add(
@@ -236,11 +277,11 @@ public class CityDashboard extends Application {
                 Platform.runLater(() ->
                         serviceList.add("gRPC Error: " + e.getStatus().getDescription())
                 );
-            } catch (Exception e) { // catch all exceptions
+            } catch (Exception e) {
                 Platform.runLater(() ->
                         serviceList.add("General Error: " + e.getClass().getSimpleName())
                 );
-                e.printStackTrace(); // print error
+                e.printStackTrace();
             }
         }).start();
     }
