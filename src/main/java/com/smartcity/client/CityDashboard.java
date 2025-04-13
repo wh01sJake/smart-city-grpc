@@ -450,7 +450,16 @@ public class CityDashboard extends Application {
                             public void onCompleted() {
                                 if (!future.isDone()) {
                                     Platform.runLater(() -> {
-                                        addAlert("No Traffic service found");
+                                        addAlert("No Traffic service found via discovery, using default address");
+                                        // Fall back to direct connection using the known port
+                                        trafficChannel = ManagedChannelBuilder.forAddress("localhost", 50052)
+                                                .usePlaintext()
+                                                .keepAliveTime(30, TimeUnit.SECONDS)
+                                                .keepAliveTimeout(10, TimeUnit.SECONDS)
+                                                .build();
+                                        trafficStub = TrafficGrpc.newStub(trafficChannel);
+                                        servicesList.getItems().add("Traffic: localhost:50052 (direct)");
+                                        trafficConnected.set(true);
                                         future.complete(null);
                                     });
                                 }
@@ -493,15 +502,24 @@ public class CityDashboard extends Application {
                             }
                             
                             @Override
+                            @Override
                             public void onCompleted() {
                                 if (!future.isDone()) {
                                     Platform.runLater(() -> {
-                                        addAlert("No Noise service found");
+                                        addAlert("No Noise service found via discovery, using default address");
+                                        // Fall back to direct connection using the known port
+                                        noiseChannel = ManagedChannelBuilder.forAddress("localhost", 50054)
+                                                .usePlaintext()
+                                                .keepAliveTime(30, TimeUnit.SECONDS)
+                                                .keepAliveTimeout(10, TimeUnit.SECONDS)
+                                                .build();
+                                        noiseStub = NoiseGrpc.newStub(noiseChannel);
+                                        servicesList.getItems().add("Noise: localhost:50054 (direct)");
+                                        noiseConnected.set(true);
                                         future.complete(null);
                                     });
                                 }
                             }
-                        });
             }
             
             private void scheduleServiceRetry(String serviceType) {
@@ -752,6 +770,7 @@ public class CityDashboard extends Application {
         
         noiseMonitoringThread.setDaemon(true);
         noiseMonitoringThread.start();
+    }
     
     private synchronized void updateTrafficSummary(TrafficSummary summary) {
         if (totalVehicles.get() == 0) {
