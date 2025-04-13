@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CityDashboard extends Application {
     private static final Logger logger = LogManager.getLogger(CityDashboard.class);
     private static final String REGISTRY_ADDRESS = "localhost:50050";
-    private static final String API_KEY = "smart-city-auth-key-2025";
 
     // =========== Data models ===========
     
@@ -702,12 +701,10 @@ public class CityDashboard extends Application {
         }
 
         CompletableFuture<Void> future = new CompletableFuture<>();
-        
         try {
-            // Connect to registry service first
             registryChannel = ManagedChannelBuilder.forTarget(REGISTRY_ADDRESS)
                 .usePlaintext()
-                .intercept(new ClientAuthInterceptor(API_KEY))
+                .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
                 .build();
             registryStub = RegistryGrpc.newStub(registryChannel);
             
@@ -757,13 +754,13 @@ public class CityDashboard extends Application {
     private void connectToService(ServiceInfo service) {
         String[] addressParts = service.getAddress().split(":");
         String host = addressParts[0];
-        int port = Integer.parseInt(addressParts[1]);
-
-        switch (service.getServiceType()) {
+        int port = addressParts.length > 1 ? Integer.parseInt(addressParts[1]) : 50051;
+        
+        switch (service.getServiceType().toLowerCase()) {
             case "traffic" -> {
                 trafficChannel = ManagedChannelBuilder.forAddress(host, port)
                     .usePlaintext()
-                    .intercept(new ClientAuthInterceptor(API_KEY))
+                    .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
                     .build();
                 trafficStub = TrafficGrpc.newStub(trafficChannel);
                 trafficConnected.set(true);
@@ -772,7 +769,7 @@ public class CityDashboard extends Application {
             case "bin" -> {
                 binChannel = ManagedChannelBuilder.forAddress(host, port)
                     .usePlaintext()
-                    .intercept(new ClientAuthInterceptor(API_KEY))
+                    .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
                     .build();
                 binStub = BinGrpc.newStub(binChannel);
                 binConnected.set(true);
@@ -781,7 +778,7 @@ public class CityDashboard extends Application {
             case "noise" -> {
                 noiseChannel = ManagedChannelBuilder.forAddress(host, port)
                     .usePlaintext()
-                    .intercept(new ClientAuthInterceptor(API_KEY))
+                    .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
                     .build();
                 noiseStub = NoiseGrpc.newStub(noiseChannel);
                 noiseConnected.set(true);
