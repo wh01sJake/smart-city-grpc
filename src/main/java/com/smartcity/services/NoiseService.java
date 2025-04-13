@@ -4,90 +4,134 @@ import com.smartcity.*;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import java.time.LocalDateTime;
+
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NoiseService extends NoiseGrpc.NoiseImplBase {
     private static final Logger logger = LogManager.getLogger(NoiseService.class);
-    private static final float DEFAULT_DAY_THRESHOLD = 70.0f;
-    private static final float DEFAULT_NIGHT_THRESHOLD = 55.0f;
     private final Map<String, NoiseThreshold> zoneThresholds = new ConcurrentHashMap<>();
-    private final String serviceAddress;
-
-    public NoiseService(String serviceAddress) {
-        this.serviceAddress = serviceAddress;
-        if (!RegistryService.selfRegister("noise", serviceAddress)) {
-            logger.warn("Failed to register noise service at {}", serviceAddress);
-        }
-    }
     
-    // Default constructor for backward compatibility
+    // Default thresholds if not set for a zone
+    private static final float DEFAULT_DAY_LIMIT = 70.0f;   // 70 dB during day
+    private static final float DEFAULT_NIGHT_LIMIT = 55.0f; // 55 dB during night
+    private static final int DAY_START_HOUR = 7;
+    private static final int NIGHT_START_HOUR = 22;
+
     public NoiseService() {
-        this("localhost:50054");
+        // Register with the registry service
+        RegistryService.selfRegister("noise", "localhost:50053");
+        logger.info("NoiseService initialized and registered");
     }
 
     @Override
-    public StreamObserver<NoiseData> monitorNoise(StreamObserver<Alert> responseObserver) {
-        return new StreamObserver<>() {
+    public StreamObserver<NoiseData> monitorNoise(final StreamObserver<Alert> responseObserver) {
+        logger.info("Starting new noise monitoring stream");
+        
+        return new StreamObserver<NoiseData>() {
             @Override
             public void onNext(NoiseData data) {
-                float threshold = getCurrentThreshold(data.getSensorId());
-                if (data.getDecibels() > threshold) {
-                    boolean isCritical = data.getDecibels() > threshold + 10;
-                    String message = String.format("Noise level %.1f dB at sensor %s %s", 
-                            data.getDecibels(), 
-                            data.getSensorId(),
-                            isCritical ? "(CRITICAL)" : "");
-
-                    Alert alert = Alert.newBuilder()
-                            .setMessage(message)
-                            .setIsCritical(isCritical)
-                            .build();
+                try {
+                    // Get the zone ID from the sensor ID (assuming format: zone_sensorNumber)
+                    String zoneId = data.getSensorId().split("_")[0];
                     
-                    responseObserver.onNext(alert);
-                    logger.warn(message);
+                    // Get threshold for the zone, or use default
+                    NoiseThreshold threshold = zoneThresholds.getOrDefault(zoneId, 
+                            NoiseThreshold.newBuilder()
+                                    .setDayLimit(DEFAULT_DAY_LIMIT)
+                                    .setNightLimit(DEFAULT_NIGHT_LIMIT)
+                                    .setZoneId(zoneId)
+                                    .build());
+
+                    // Determine if it's day or night
+                    int currentHour = LocalTime.now().getHour();
+                    boolean isDay = currentHour >= DAY_START_HOUR && currentHour < NIGHT_START_HOUR;
+                    float currentLimit = isDay ? threshold.getDayLimit() : threshold.getNightLimit();
+
+                    // Check if noise level exceeds threshold
+                    if (data.getDecibels() > currentLimit) {
+                        String timeContext = isDay ? "daytime" : "nighttime";
+                        Alert alert = Alert.newBuilder()
+                                .setMessage(String.format("High noise level detected in zone %s: %.1f dB (limit: %.1f dB, %s)",
+                                        zoneId, data.getDecibels(), currentLimit, timeContext))
+                                .setIsCritical(data.getDecibels() > currentLimit + 10) // Critical if exceeds by 10dB
+                                .build();
+                        
+                        responseObserver.onNext(alert);
+                        
+                        if (alert.getIsCritical()) {
+                            logger.warn("Critical noise level in zone {}: {} dB", zoneId, data.getDecibels());
+                        } else {
+                            logger.info("Noise threshold exceeded in zone {}: {} dB", zoneId, data.getDecibels());
+                        }
+                    }
+
+                    // Log regular readings at debug level
+                    logger.debug("Noise reading from sensor {}: {} dB", data.getSensorId(), data.getDecibels());
+
+                } catch (Exception e) {
+                    logger.error("Error processing noise data", e);
+                    responseObserver.onError(e);
                 }
             }
 
             @Override
-            public void onCompleted() {
-                responseObserver.onCompleted();
-                logger.info("Noise monitoring completed");
+            public void onError(Throwable t) {
+                logger.error("Error in noise monitoring stream", t);
+                // Don't close the stream on error, let the client decide
             }
 
             @Override
-            public void onError(Throwable t) {
-                logger.error("Error in noise monitoring", t);
-                responseObserver.onError(t);
+            public void onCompleted() {
+                try {
+                    responseObserver.onCompleted();
+                    logger.info("Noise monitoring stream completed");
+                } catch (Exception e) {
+                    logger.error("Error completing noise monitoring stream", e);
+                    responseObserver.onError(e);
+                }
             }
         };
     }
 
     @Override
     public void setZoneThreshold(NoiseThreshold request, StreamObserver<Response> responseObserver) {
-        zoneThresholds.put(request.getZoneId(), request);
-        logger.info("Set noise thresholds for zone {}: day={}, night={}", 
-                request.getZoneId(), 
-                request.getDayLimit(), 
-                request.getNightLimit());
-        
-        responseObserver.onNext(Response.newBuilder()
-                .setStatus("Threshold updated successfully")
-                .build());
-        responseObserver.onCompleted();
-    }
+        try {
+            // Validate thresholds
+            if (request.getDayLimit() < 0 || request.getNightLimit() < 0) {
+                throw new IllegalArgumentException("Noise thresholds cannot be negative");
+            }
+            if (request.getNightLimit() > request.getDayLimit()) {
+                throw new IllegalArgumentException("Night threshold cannot be higher than day threshold");
+            }
+            if (request.getDayLimit() > 100 || request.getNightLimit() > 100) {
+                throw new IllegalArgumentException("Noise thresholds cannot exceed 100 dB");
+            }
 
-    private float getCurrentThreshold(String sensorId) {
-        NoiseThreshold threshold = zoneThresholds.get(sensorId);
-        if (threshold == null) {
-            return isNightTime() ? DEFAULT_NIGHT_THRESHOLD : DEFAULT_DAY_THRESHOLD;
+            // Store the threshold
+            zoneThresholds.put(request.getZoneId(), request);
+            
+            logger.info("Updated noise thresholds for zone {}: day={} dB, night={} dB",
+                    request.getZoneId(), request.getDayLimit(), request.getNightLimit());
+
+            Response response = Response.newBuilder()
+                    .setStatus(String.format("Thresholds updated for zone %s", request.getZoneId()))
+                    .build();
+            
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid threshold settings: {}", e.getMessage());
+            responseObserver.onError(io.grpc.Status.INVALID_ARGUMENT
+                .withDescription(e.getMessage())
+                .asRuntimeException());
+        } catch (Exception e) {
+            logger.error("Error setting zone threshold for zone: " + request.getZoneId(), e);
+            responseObserver.onError(io.grpc.Status.INTERNAL
+                .withDescription("Internal server error: " + e.getMessage())
+                .asRuntimeException());
         }
-        return isNightTime() ? threshold.getNightLimit() : threshold.getDayLimit();
-    }
-
-    private boolean isNightTime() {
-        int hour = LocalDateTime.now().getHour();
-        return hour >= 22 || hour < 6;
     }
 }
