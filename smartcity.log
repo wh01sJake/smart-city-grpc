@@ -229,3 +229,124 @@ io.grpc.StatusRuntimeException: CANCELLED: call already cancelled. Use ServerCal
 2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Server listening on port 50051
 2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Registered services: 3
 2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-13 23:43:27 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-13 23:43:27 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:43:52 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-13 23:43:52 [grpc-default-executor-0] WARN  com.smartcity.ApiKeyInterceptor - API key validation failed for method Registry/DiscoverServices: Missing API key
+2025-04-13 23:43:52 [grpc-default-executor-0] ERROR com.smartcity.client.CityDashboard - Service discovery error
+io.grpc.StatusRuntimeException: UNAUTHENTICATED: Missing API key
+	at io.grpc.Status.asRuntimeException(Status.java:533) ~[grpc-api-1.62.2.jar:1.62.2]
+	at io.grpc.stub.ClientCalls$StreamObserverToCallListenerAdapter.onClose(ClientCalls.java:481) ~[grpc-stub-1.62.2.jar:1.62.2]
+	at io.grpc.internal.DelayedClientCall$DelayedListener$3.run(DelayedClientCall.java:489) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.DelayedClientCall$DelayedListener.delayOrExecute(DelayedClientCall.java:453) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.DelayedClientCall$DelayedListener.onClose(DelayedClientCall.java:486) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl.closeObserver(ClientCallImpl.java:574) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl.access$300(ClientCallImpl.java:72) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl$ClientStreamListenerImpl$1StreamClosed.runInternal(ClientCallImpl.java:742) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl$ClientStreamListenerImpl$1StreamClosed.runInContext(ClientCallImpl.java:723) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133) ~[grpc-core-1.62.2.jar:1.62.2]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.lang.Thread.run(Thread.java:1583) [?:?]
+2025-04-13 23:43:52 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Error discovering services: UNAUTHENTICATED: Missing API key
+2025-04-13 23:44:12 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-13 23:44:12 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-13 23:44:12 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-13 23:52:00 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-13 23:52:00 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-13 23:53:14 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-13 23:53:14 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:53:32 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-13 23:53:33 [grpc-default-executor-0] WARN  com.smartcity.ApiKeyInterceptor - API key validation failed for method Registry/DiscoverServices: Invalid API key
+2025-04-13 23:53:33 [grpc-default-executor-0] ERROR com.smartcity.ClientAuthInterceptor - Authentication failed: Invalid API key
+2025-04-13 23:53:33 [grpc-default-executor-0] ERROR com.smartcity.client.CityDashboard - Service discovery error
+io.grpc.StatusRuntimeException: UNAUTHENTICATED: Invalid API key
+	at io.grpc.Status.asRuntimeException(Status.java:533) ~[grpc-api-1.62.2.jar:1.62.2]
+	at io.grpc.stub.ClientCalls$StreamObserverToCallListenerAdapter.onClose(ClientCalls.java:481) ~[grpc-stub-1.62.2.jar:1.62.2]
+	at io.grpc.PartialForwardingClientCallListener.onClose(PartialForwardingClientCallListener.java:39) ~[grpc-api-1.62.2.jar:1.62.2]
+	at io.grpc.ForwardingClientCallListener.onClose(ForwardingClientCallListener.java:23) ~[grpc-api-1.62.2.jar:1.62.2]
+	at io.grpc.ForwardingClientCallListener$SimpleForwardingClientCallListener.onClose(ForwardingClientCallListener.java:40) ~[grpc-api-1.62.2.jar:1.62.2]
+	at com.smartcity.ClientAuthInterceptor$1$1.onClose(ClientAuthInterceptor.java:76) ~[classes/:?]
+	at io.grpc.internal.DelayedClientCall$DelayedListener$3.run(DelayedClientCall.java:489) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.DelayedClientCall$DelayedListener.delayOrExecute(DelayedClientCall.java:453) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.DelayedClientCall$DelayedListener.onClose(DelayedClientCall.java:486) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl.closeObserver(ClientCallImpl.java:574) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl.access$300(ClientCallImpl.java:72) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl$ClientStreamListenerImpl$1StreamClosed.runInternal(ClientCallImpl.java:742) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ClientCallImpl$ClientStreamListenerImpl$1StreamClosed.runInContext(ClientCallImpl.java:723) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37) ~[grpc-core-1.62.2.jar:1.62.2]
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133) ~[grpc-core-1.62.2.jar:1.62.2]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.lang.Thread.run(Thread.java:1583) [?:?]
+2025-04-13 23:53:33 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Error discovering services: UNAUTHENTICATED: Invalid API key
+2025-04-13 23:53:59 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-13 23:53:59 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-13 23:53:59 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-13 23:54:29 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-13 23:54:29 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-13 23:54:44 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-13 23:54:44 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 23:55:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-13 23:55:22 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-13 23:55:22 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-13 23:55:22 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-13 23:55:22 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Traffic service not connected - monitoring disabled
+2025-04-13 23:55:22 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Noise service not connected - monitoring disabled
+2025-04-13 23:55:29 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-13 23:55:29 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-13 23:55:29 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-13 23:55:36 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Please select both intersection and light color
+2025-04-13 23:55:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Please select both intersection and light color
+2025-04-13 23:55:54 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Not connected to Bin service - cannot get collection route
+2025-04-13 23:56:11 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-13 23:56:11 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...

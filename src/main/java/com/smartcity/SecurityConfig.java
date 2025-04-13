@@ -25,7 +25,7 @@ public final class SecurityConfig {
      * Default API key for development environment.
      * In production, this should be loaded from environment variables or secure configuration.
      */
-    public static final String DEFAULT_API_KEY = "smartcityjake";
+    public static final String DEFAULT_API_KEY = "smart-city-auth-key-2025";
 
     /**
      * Status codes for authentication errors
