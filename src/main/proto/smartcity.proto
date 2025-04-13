@@ -34,9 +34,21 @@ message TrafficData {
   string timestamp = 2;
 }
 
+message IntersectionStatus {
+  string intersection_id = 1;
+  string current_color = 2;
+  int32 waiting_vehicles = 3;
+}
+
+message TrafficSummary {
+  int32 total_vehicles = 1;
+  repeated IntersectionStatus intersections = 2;
+}
+
 service Traffic {
   rpc SetLight(LightCommand) returns (Response);
   rpc StreamTraffic(Empty) returns (stream TrafficData);
+  rpc GetTrafficSummary(Empty) returns (TrafficSummary);
 }
 
 // ====== Bin Service ======
@@ -57,9 +69,16 @@ message Route {
   repeated string bins = 1;
 }
 
+message BinAlert {
+  string bin_id = 1;
+  int32 fill_percent = 2;
+  bool urgent_collection = 3;
+}
+
 service Bin {
   rpc ReportBins(stream BinStatus) returns (Summary);
   rpc GetRoute(Zone) returns (Route);
+  rpc GetUrgentCollections(Empty) returns (stream BinAlert);
 }
 
 // ====== Noise Service ======
@@ -73,8 +92,15 @@ message Alert {
   bool is_critical = 2;
 }
 
+message NoiseThreshold {
+  float day_limit = 1;
+  float night_limit = 2;
+  string zone_id = 3;
+}
+
 service Noise {
   rpc MonitorNoise(stream NoiseData) returns (stream Alert);
+  rpc SetZoneThreshold(NoiseThreshold) returns (Response);
 }
 
 // ====== Registry Service ======

@@ -1,25 +1,21 @@
 package com.smartcity.services;
 
-import com.smartcity.BinStatus;
-import com.smartcity.Summary;
-import com.smartcity.Zone;
-import com.smartcity.Route;
-import com.smartcity.BinGrpc;
+import com.smartcity.*;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import java.util.Map;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BinService extends BinGrpc.BinImplBase {
-    private final ConcurrentHashMap<String, Integer> binStatusMap = new ConcurrentHashMap<>();
     private static final Logger logger = LogManager.getLogger(BinService.class);
+    private final Map<String, BinStatus> binStatuses = new ConcurrentHashMap<>();
+    private static final int URGENT_THRESHOLD = 90;
+    private static final int HIGH_THRESHOLD = 80;
 
     public BinService() {
         RegistryService.selfRegister("bin", "localhost:50051");
-
     }
 
     @Override
@@ -30,36 +26,70 @@ public class BinService extends BinGrpc.BinImplBase {
 
             @Override
             public void onNext(BinStatus status) {
-                // Store bin status
-                binStatusMap.put(status.getBinId(), status.getFillPercent());
+                binStatuses.put(status.getBinId(), status);
                 total += status.getFillPercent();
                 count++;
-                logger.info("Received status for bin {}: {}% full", status.getBinId(), status.getFillPercent());
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                logger.error("Bin reporting error: {}", t.getMessage());
+                
+                if (status.getFillPercent() > URGENT_THRESHOLD) {
+                    logger.warn("Urgent collection needed for bin: {} ({}%)", 
+                            status.getBinId(), 
+                            status.getFillPercent());
+                }
             }
 
             @Override
             public void onCompleted() {
-                float avg = count > 0 ? (float) total / count : 0;
-                responseObserver.onNext(Summary.newBuilder().setAverage(avg).build());
+                float average = count > 0 ? (float) total / count : 0;
+                responseObserver.onNext(Summary.newBuilder()
+                        .setAverage(average)
+                        .build());
                 responseObserver.onCompleted();
-                logger.info("Bin reporting completed. Average: {}%", avg);
+                logger.info("Bin report completed: {} bins, average fill {}%", count, average);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                logger.error("Error in bin reporting", t);
+                responseObserver.onError(t);
             }
         };
     }
 
     @Override
     public void getRoute(Zone request, StreamObserver<Route> responseObserver) {
-        List<String> priorityBins = new ArrayList<>();
-        binStatusMap.forEach((binId, fill) -> {
-            if (fill > 80) priorityBins.add(binId);
+        ArrayList<String> priorityBins = new ArrayList<>();
+        binStatuses.forEach((binId, status) -> {
+            if (status.getFillPercent() > HIGH_THRESHOLD) {
+                priorityBins.add(binId);
+            }
         });
-        responseObserver.onNext(Route.newBuilder().addAllBins(priorityBins).build());
+        
+        Route route = Route.newBuilder()
+                .addAllBins(priorityBins)
+                .build();
+        
+        responseObserver.onNext(route);
         responseObserver.onCompleted();
-        logger.info("Route generated for zone {}", request.getAreaId());
+        logger.info("Route generated for zone {} with {} priority bins", 
+                request.getAreaId(), 
+                priorityBins.size());
+    }
+
+    @Override
+    public void getUrgentCollections(Empty request, StreamObserver<BinAlert> responseObserver) {
+        binStatuses.forEach((binId, status) -> {
+            if (status.getFillPercent() > URGENT_THRESHOLD) {
+                BinAlert alert = BinAlert.newBuilder()
+                        .setBinId(binId)
+                        .setFillPercent(status.getFillPercent())
+                        .setUrgentCollection(true)
+                        .build();
+                responseObserver.onNext(alert);
+                logger.warn("Urgent collection alert: Bin {} at {}%", 
+                        binId, 
+                        status.getFillPercent());
+            }
+        });
+        responseObserver.onCompleted();
     }
 }
