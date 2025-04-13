@@ -599,8 +599,7 @@ public class CityDashboard extends Application {
         
         // Create new thread for periodic traffic summary polling
         trafficSummaryThread = new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted() && !threadsShouldStop) {
-            while (!Thread.currentThread().isInterrupted() && !threadsShouldStop) {
+            while (!threadsShouldStop) {
                 try {
                     // Check if traffic service is still available
                     if (trafficStub == null || !trafficConnected.get()) {
@@ -647,7 +646,6 @@ public class CityDashboard extends Application {
     }
     
     private void startNoiseMonitoring() {
-        // Stop existing thread if running
         // Stop existing thread if running
         if (noiseMonitoringThread != null && noiseMonitoringThread.isAlive()) {
             noiseMonitoringThread.interrupt();
@@ -704,7 +702,7 @@ public class CityDashboard extends Application {
             }
             
             // Simulate noise data for demonstration purposes
-            while (!Thread.currentThread().isInterrupted() && !threadsShouldStop) {
+            while (!threadsShouldStop) {
                 try {
                     // Create simulated noise data
                     String[] sensorIds = {"residential-1", "downtown-1", "industrial-1"};
@@ -816,6 +814,7 @@ public class CityDashboard extends Application {
     
     private void setTrafficLight(String intersection, String color) {
         if (trafficStub != null && trafficConnected.get()) {
+            LightCommand command = LightCommand.newBuilder()
                     .setIntersection(intersection)
                     .setColor(color)
                     .build();
