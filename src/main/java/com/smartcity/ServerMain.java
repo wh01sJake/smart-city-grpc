@@ -7,7 +7,6 @@
  * - Service registry
  */
 
-
 package com.smartcity;
 import com.smartcity.services.*;
 import io.grpc.Server;
@@ -15,58 +14,136 @@ import io.grpc.ServerBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class ServerMain {
     private static final Logger logger = LogManager.getLogger(ServerMain.class);
-    private static final int REGISTRY_PORT = 50051;
-    private static final int TRAFFIC_PORT = 50052;
-    private static final int BIN_PORT = 50053;
-    private static final int NOISE_PORT = 50054;
+    private static final int REGISTRY_PORT = 50050;
+    private static final int SERVICE_PORT = 50051;
+    
+    private Server registryServer;
+    private Server serviceServer;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public void start() throws Exception {
+        try {
+            // Initialize Registry Server
+            logger.info("Initializing service registry...");
+            RegistryService registryService = new RegistryService();
+            registryServer = ServerBuilder.forPort(REGISTRY_PORT)
+                .intercept(new ApiKeyInterceptor())
+                .addService(registryService)
+                .build();
+            registryServer.start();
+            logger.info("Registry Server started on port {}", REGISTRY_PORT);
 
-        // Initialize service registry
-        RegistryService registryService = new RegistryService();
-        logger.info("Initializing service registry...");
+            // Initialize Services
+            logger.info("Initializing services...");
+            TrafficService trafficService;
+            BinService binService;
+            NoiseService noiseService;
 
-        // Create service instances with distinct addresses
-        String registryAddress = "localhost:" + REGISTRY_PORT;
-        TrafficService trafficService = new TrafficService("localhost:" + TRAFFIC_PORT);
-        BinService binService = new BinService("localhost:" + BIN_PORT);
-        NoiseService noiseService = new NoiseService("localhost:" + NOISE_PORT);
+            try {
+                logger.debug("Initializing Traffic Service...");
+                trafficService = new TrafficService();
+                
+                logger.debug("Initializing Bin Service...");
+                binService = new BinService();
+                
+                logger.debug("Initializing Noise Service...");
+                noiseService = new NoiseService();
+                
+                logger.info("All services initialized successfully");
+            } catch (Exception e) {
+                logger.error("Error initializing services", e);
+                throw new RuntimeException("Failed to initialize services", e);
+            }
 
-        Server server = ServerBuilder.forPort(REGISTRY_PORT)
+            // Initialize Service Server
+            serviceServer = ServerBuilder.forPort(SERVICE_PORT)
                 .intercept(new ApiKeyInterceptor())
                 .addService(trafficService)
                 .addService(binService)
                 .addService(noiseService)
-                .addService(registryService)
-                .build()
-                .start();
+                .build();
+            serviceServer.start();
+            
+            // Log startup information
+            logger.info("========================================");
+            logger.info("Registry Server running on port {}", REGISTRY_PORT);
+            logger.info("Service Server running on port {}", SERVICE_PORT);
+            logger.info("Active Services: Traffic, Bin, Noise");
+            logger.info("Registered Services Count: {}", registryService.getRegisteredServicesCount());
+            logger.info("========================================");
 
-//        // Self-register services
-//        String serverAddress = "localhost:50051";
-//        System.out.println("[INFO] Registering core services...");
-//        RegistryService.selfRegister("traffic", serverAddress);
-//        RegistryService.selfRegister("bins", serverAddress);
-//        RegistryService.selfRegister("noise", serverAddress);
+        } catch (Exception e) {
+            logger.error("Failed to start servers", e);
+            stop(); // Ensure cleanup on failure
+            throw e;
+        }
+    }
 
-        // Shutdown hook
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("Shutting down server...");
-            server.shutdown();
-            logger.info("Server stopped");
-        }));
+    public void stop() {
+        try {
+            if (serviceServer != null) {
+                logger.info("Shutting down service server...");
+                serviceServer.shutdown();
+                if (!serviceServer.awaitTermination(5, TimeUnit.SECONDS)) {
+                    logger.warn("Service server did not terminate gracefully, forcing shutdown");
+                    serviceServer.shutdownNow();
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error shutting down service server", e);
+            if (serviceServer != null) {
+                serviceServer.shutdownNow();
+            }
+        }
 
-        // Updated startup banner with logger
-        logger.info("========================================");
-        logger.info("Server listening on port {}", REGISTRY_PORT);
-        logger.info("Traffic service registered at port {}", TRAFFIC_PORT);
-        logger.info("Bin service registered at port {}", BIN_PORT);
-        logger.info("Noise service registered at port {}", NOISE_PORT);
-        logger.info("Total registered services: {}", registryService.getRegisteredServicesCount());
-        logger.info("========================================");
-        server.awaitTermination();
+        try {
+            if (registryServer != null) {
+                logger.info("Shutting down registry server...");
+                registryServer.shutdown();
+                if (!registryServer.awaitTermination(5, TimeUnit.SECONDS)) {
+                    logger.warn("Registry server did not terminate gracefully, forcing shutdown");
+                    registryServer.shutdownNow();
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error shutting down registry server", e);
+            if (registryServer != null) {
+                registryServer.shutdownNow();
+            }
+        }
+        
+        logger.info("All servers stopped");
+    }
+
+    public void blockUntilShutdown() throws InterruptedException {
+        if (serviceServer != null) {
+            serviceServer.awaitTermination();
+        }
+        if (registryServer != null) {
+            registryServer.awaitTermination();
+        }
+    }
+
+    public static void main(String[] args) {
+        ServerMain server = new ServerMain();
+        try {
+            server.start();
+
+            // Add shutdown hook
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                logger.info("Received shutdown signal");
+                server.stop();
+            }));
+
+            // Wait for termination
+            server.blockUntilShutdown();
+
+        } catch (Exception e) {
+            logger.error("Fatal error starting server", e);
+            System.exit(1);
+        }
     }
 }
