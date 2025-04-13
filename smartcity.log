@@ -1,0 +1,231 @@
+2025-04-04 19:05:43 [main] INFO  com.smartcity.ServerMain - Server started on port 50051
+2025-04-04 19:07:28 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down server...
+2025-04-04 19:08:51 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-04 19:08:51 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-04 19:08:51 [main] INFO  com.smartcity.ServerMain - Server listening on port 50051
+2025-04-04 19:08:51 [main] INFO  com.smartcity.ServerMain - Registered services: 3
+2025-04-04 19:08:51 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-04 19:09:44 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: 
+2025-04-04 19:09:58 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Started traffic data streaming
+2025-04-04 19:10:03 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Changing light at main_st to RED
+2025-04-04 19:10:14 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Changing light at main_st to GREEN
+2025-04-04 19:10:25 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_1: 54% full
+2025-04-04 19:10:26 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_2: 13% full
+2025-04-04 19:10:27 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_3: 61% full
+2025-04-04 19:10:28 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_4: 6% full
+2025-04-04 19:10:29 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_5: 10% full
+2025-04-04 19:10:30 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Bin reporting completed. Average: 28.8%
+2025-04-04 19:10:46 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: 
+2025-04-04 19:13:14 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down server...
+2025-04-04 19:14:00 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-04 19:14:00 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] traffic at localhost:50051
+2025-04-04 19:14:00 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] bins at localhost:50051
+2025-04-04 19:14:00 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] noise at localhost:50051
+2025-04-04 19:14:00 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-04 19:14:00 [main] INFO  com.smartcity.ServerMain - Server listening on port 50051
+2025-04-04 19:14:00 [main] INFO  com.smartcity.ServerMain - Registered services: 3
+2025-04-04 19:14:00 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-04 19:14:39 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: 
+2025-04-04 19:14:49 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Changing light at main_st to RED
+2025-04-04 19:15:09 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Changing light at main_st to GREEN
+2025-04-04 19:16:02 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Started traffic data streaming
+2025-04-04 19:16:38 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_1: 0% full
+2025-04-04 19:16:39 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_2: 86% full
+2025-04-04 19:16:40 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_3: 20% full
+2025-04-04 19:16:41 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_4: 95% full
+2025-04-04 19:16:42 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Received status for bin bin_5: 49% full
+2025-04-04 19:16:43 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Bin reporting completed. Average: 50.0%
+2025-04-04 19:17:24 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:26 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:27 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:29 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:30 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:32 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:33 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:35 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:36 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:38 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:17:39 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring session ended
+2025-04-04 19:17:44 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: 
+2025-04-04 19:19:32 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down server...
+2025-04-04 19:24:20 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-04 19:24:20 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] traffic at localhost:50051
+2025-04-04 19:24:20 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] bin at localhost:50051
+2025-04-04 19:24:20 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] noise at localhost:50051
+2025-04-04 19:24:21 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-04 19:24:21 [main] INFO  com.smartcity.ServerMain - Server listening on port 50051
+2025-04-04 19:24:21 [main] INFO  com.smartcity.ServerMain - Registered services: 3
+2025-04-04 19:24:21 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-04 19:24:49 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for all services
+2025-04-04 19:25:16 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Started traffic data streaming
+2025-04-04 19:26:34 [grpc-default-executor-1] INFO  com.smartcity.services.TrafficService - Changing light at main_st to RED
+2025-04-04 19:26:42 [grpc-default-executor-1] INFO  com.smartcity.services.TrafficService - Changing light at main_st to GREEN
+2025-04-04 19:26:45 [grpc-default-executor-1] INFO  com.smartcity.services.TrafficService - Changing light at main_st to GREEN
+2025-04-04 19:26:48 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Received status for bin bin_1: 44% full
+2025-04-04 19:26:49 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Received status for bin bin_2: 65% full
+2025-04-04 19:26:50 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Received status for bin bin_3: 69% full
+2025-04-04 19:26:51 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Received status for bin bin_4: 96% full
+2025-04-04 19:26:52 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Received status for bin bin_5: 81% full
+2025-04-04 19:26:53 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Bin reporting completed. Average: 71.0%
+2025-04-04 19:27:10 [grpc-default-executor-1] INFO  com.smartcity.services.RegistryService - Service discovery completed for all services
+2025-04-04 19:27:14 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:27:17 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:27:20 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:27:23 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:27:25 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:27:26 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Alert sent for sensor sensor_1
+2025-04-04 19:27:29 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Noise monitoring session ended
+2025-04-04 19:28:31 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down server...
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.services.RegistryService - [Self-Register] traffic at localhost:50051
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.services.RegistryService - [Self-Register] bin at localhost:50051
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.services.RegistryService - [Self-Register] noise at localhost:50051
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Server listening on port 50051
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Registered services: 3
+2025-04-13 20:46:18 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 20:50:03 [main] INFO  com.smartcity.TestClient - Testing Traffic Service...
+2025-04-13 20:50:04 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Light at main_st changed to RED
+2025-04-13 20:50:04 [main] INFO  com.smartcity.TestClient - SetLight Response: Light changed successfully
+2025-04-13 20:50:04 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Started traffic data streaming
+2025-04-13 20:50:04 [main] INFO  com.smartcity.TestClient - Traffic Data: 76 vehicles at 2025-04-13T19:50:04.298747700Z
+2025-04-13 20:50:04 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 76 vehicles
+2025-04-13 20:50:09 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 32 vehicles
+2025-04-13 20:50:09 [main] INFO  com.smartcity.TestClient - Traffic Data: 32 vehicles at 2025-04-13T19:50:09.310080600Z
+2025-04-13 20:50:14 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 82 vehicles
+2025-04-13 20:50:14 [main] INFO  com.smartcity.TestClient - Traffic Data: 82 vehicles at 2025-04-13T19:50:14.305531600Z
+2025-04-13 20:50:19 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 62 vehicles
+2025-04-13 20:50:19 [main] INFO  com.smartcity.TestClient - Traffic Data: 62 vehicles at 2025-04-13T19:50:19.310417800Z
+2025-04-13 20:50:24 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 34 vehicles
+2025-04-13 20:50:24 [main] INFO  com.smartcity.TestClient - Traffic Data: 34 vehicles at 2025-04-13T19:50:24.303063400Z
+2025-04-13 20:50:29 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 25 vehicles
+2025-04-13 20:50:29 [main] INFO  com.smartcity.TestClient - Traffic Data: 25 vehicles at 2025-04-13T19:50:29.311593600Z
+2025-04-13 20:50:34 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 43 vehicles
+2025-04-13 20:50:34 [main] INFO  com.smartcity.TestClient - Traffic Data: 43 vehicles at 2025-04-13T19:50:34.301628800Z
+2025-04-13 20:50:35 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for all services
+2025-04-13 20:50:39 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 62 vehicles
+2025-04-13 20:50:39 [main] INFO  com.smartcity.TestClient - Traffic Data: 62 vehicles at 2025-04-13T19:50:39.300745500Z
+2025-04-13 20:50:44 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 47 vehicles
+2025-04-13 20:50:44 [main] INFO  com.smartcity.TestClient - Traffic Data: 47 vehicles at 2025-04-13T19:50:44.301802200Z
+2025-04-13 20:50:49 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 26 vehicles
+2025-04-13 20:50:49 [main] INFO  com.smartcity.TestClient - Traffic Data: 26 vehicles at 2025-04-13T19:50:49.298276500Z
+2025-04-13 20:50:54 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 0 vehicles
+2025-04-13 20:50:54 [main] INFO  com.smartcity.TestClient - Traffic Data: 0 vehicles at 2025-04-13T19:50:54.300972Z
+2025-04-13 20:50:54 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Light at main_st changed to RED
+2025-04-13 20:50:59 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 41 vehicles
+2025-04-13 20:50:59 [main] INFO  com.smartcity.TestClient - Traffic Data: 41 vehicles at 2025-04-13T19:50:59.304872600Z
+2025-04-13 20:51:00 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Light at main_st changed to GREEN
+2025-04-13 20:51:04 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 20 vehicles
+2025-04-13 20:51:04 [main] INFO  com.smartcity.TestClient - Traffic Data: 20 vehicles at 2025-04-13T19:51:04.304207900Z
+2025-04-13 20:51:08 [grpc-default-executor-0] INFO  com.smartcity.services.BinService - Bin report completed: 5 bins, average fill 63.6%
+2025-04-13 20:51:09 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 16 vehicles
+2025-04-13 20:51:09 [main] INFO  com.smartcity.TestClient - Traffic Data: 16 vehicles at 2025-04-13T19:51:09.305679400Z
+2025-04-13 20:51:14 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 53 vehicles
+2025-04-13 20:51:14 [main] INFO  com.smartcity.TestClient - Traffic Data: 53 vehicles at 2025-04-13T19:51:14.302935600Z
+2025-04-13 20:51:19 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 82 vehicles
+2025-04-13 20:51:19 [main] INFO  com.smartcity.TestClient - Traffic Data: 82 vehicles at 2025-04-13T19:51:19.310555500Z
+2025-04-13 20:51:23 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 98.7 dB at sensor sensor_1 (CRITICAL)
+2025-04-13 20:51:24 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 27 vehicles
+2025-04-13 20:51:24 [main] INFO  com.smartcity.TestClient - Traffic Data: 27 vehicles at 2025-04-13T19:51:24.315373600Z
+2025-04-13 20:51:24 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 84.3 dB at sensor sensor_1 (CRITICAL)
+2025-04-13 20:51:26 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 70.8 dB at sensor sensor_1 
+2025-04-13 20:51:27 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 70.7 dB at sensor sensor_1 
+2025-04-13 20:51:29 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 8 vehicles
+2025-04-13 20:51:29 [main] INFO  com.smartcity.TestClient - Traffic Data: 8 vehicles at 2025-04-13T19:51:29.309826200Z
+2025-04-13 20:51:30 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 91.0 dB at sensor sensor_1 (CRITICAL)
+2025-04-13 20:51:32 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 82.4 dB at sensor sensor_1 (CRITICAL)
+2025-04-13 20:51:33 [grpc-default-executor-0] WARN  com.smartcity.services.NoiseService - Noise level 72.2 dB at sensor sensor_1 
+2025-04-13 20:51:34 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 83 vehicles
+2025-04-13 20:51:34 [main] INFO  com.smartcity.TestClient - Traffic Data: 83 vehicles at 2025-04-13T19:51:34.311102100Z
+2025-04-13 20:51:36 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring completed
+2025-04-13 20:51:39 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 5 vehicles
+2025-04-13 20:51:39 [main] INFO  com.smartcity.TestClient - Traffic Data: 5 vehicles at 2025-04-13T19:51:39.311515500Z
+2025-04-13 20:51:44 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 60 vehicles
+2025-04-13 20:51:44 [main] INFO  com.smartcity.TestClient - Traffic Data: 60 vehicles at 2025-04-13T19:51:44.302668900Z
+2025-04-13 20:51:49 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 69 vehicles
+2025-04-13 20:51:49 [main] INFO  com.smartcity.TestClient - Traffic Data: 69 vehicles at 2025-04-13T19:51:49.304547800Z
+2025-04-13 20:51:54 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 96 vehicles
+2025-04-13 20:51:54 [main] INFO  com.smartcity.TestClient - Traffic Data: 96 vehicles at 2025-04-13T19:51:54.301812100Z
+2025-04-13 20:51:59 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 56 vehicles
+2025-04-13 20:51:59 [main] INFO  com.smartcity.TestClient - Traffic Data: 56 vehicles at 2025-04-13T19:51:59.300447800Z
+2025-04-13 20:52:04 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 30 vehicles
+2025-04-13 20:52:04 [main] INFO  com.smartcity.TestClient - Traffic Data: 30 vehicles at 2025-04-13T19:52:04.299724500Z
+2025-04-13 20:52:09 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 80 vehicles
+2025-04-13 20:52:09 [main] INFO  com.smartcity.TestClient - Traffic Data: 80 vehicles at 2025-04-13T19:52:09.300706700Z
+2025-04-13 20:52:14 [pool-4-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 16 vehicles
+2025-04-13 20:52:14 [main] INFO  com.smartcity.TestClient - Traffic Data: 16 vehicles at 2025-04-13T19:52:14.302005500Z
+2025-04-13 20:52:19 [pool-4-thread-1] ERROR com.smartcity.services.TrafficService - Error streaming traffic data
+io.grpc.StatusRuntimeException: CANCELLED: call already cancelled. Use ServerCallStreamObserver.setOnCancelHandler() to disable this exception
+	at io.grpc.Status.asRuntimeException(Status.java:525) ~[grpc-api-1.62.2.jar:1.62.2]
+	at io.grpc.stub.ServerCalls$ServerCallStreamObserverImpl.onNext(ServerCalls.java:366) ~[grpc-stub-1.62.2.jar:1.62.2]
+	at com.smartcity.services.TrafficService.lambda$streamTraffic$0(TrafficService.java:52) ~[classes/:?]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?]
+	at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358) ~[?:?]
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.lang.Thread.run(Thread.java:1583) [?:?]
+2025-04-13 20:52:24 [pool-4-thread-1] ERROR com.smartcity.services.TrafficService - Error streaming traffic data
+io.grpc.StatusRuntimeException: CANCELLED: call already cancelled. Use ServerCallStreamObserver.setOnCancelHandler() to disable this exception
+	at io.grpc.Status.asRuntimeException(Status.java:525) ~[grpc-api-1.62.2.jar:1.62.2]
+	at io.grpc.stub.ServerCalls$ServerCallStreamObserverImpl.onNext(ServerCalls.java:366) ~[grpc-stub-1.62.2.jar:1.62.2]
+	at com.smartcity.services.TrafficService.lambda$streamTraffic$0(TrafficService.java:52) ~[classes/:?]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?]
+	at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358) ~[?:?]
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.lang.Thread.run(Thread.java:1583) [?:?]
+2025-04-13 21:18:13 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-13 21:18:13 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] traffic at localhost:50051
+2025-04-13 21:18:13 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] bin at localhost:50051
+2025-04-13 21:18:13 [main] INFO  com.smartcity.services.RegistryService - [Self-Register] noise at localhost:50051
+2025-04-13 21:18:13 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 21:18:13 [main] INFO  com.smartcity.ServerMain - Server listening on port 50051
+2025-04-13 21:18:13 [main] INFO  com.smartcity.ServerMain - Registered services: 3
+2025-04-13 21:18:13 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 21:19:17 [main] INFO  com.smartcity.TestClient - Testing Traffic Service...
+2025-04-13 21:19:18 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Light at main_st changed to RED
+2025-04-13 21:19:18 [main] INFO  com.smartcity.TestClient - SetLight Response: Light changed successfully
+2025-04-13 21:19:18 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Started traffic data streaming
+2025-04-13 21:19:18 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 40 vehicles
+2025-04-13 21:19:18 [main] INFO  com.smartcity.TestClient - Traffic Data: 40 vehicles at 2025-04-13T20:19:18.087036400Z
+2025-04-13 21:19:23 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 81 vehicles
+2025-04-13 21:19:23 [main] INFO  com.smartcity.TestClient - Traffic Data: 81 vehicles at 2025-04-13T20:19:23.095394Z
+2025-04-13 21:19:28 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 82 vehicles
+2025-04-13 21:19:28 [main] INFO  com.smartcity.TestClient - Traffic Data: 82 vehicles at 2025-04-13T20:19:28.087546600Z
+2025-04-13 21:19:33 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 93 vehicles
+2025-04-13 21:19:33 [main] INFO  com.smartcity.TestClient - Traffic Data: 93 vehicles at 2025-04-13T20:19:33.085925100Z
+2025-04-13 21:19:38 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 51 vehicles
+2025-04-13 21:19:38 [main] INFO  com.smartcity.TestClient - Traffic Data: 51 vehicles at 2025-04-13T20:19:38.090567300Z
+2025-04-13 21:19:43 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 50 vehicles
+2025-04-13 21:19:43 [main] INFO  com.smartcity.TestClient - Traffic Data: 50 vehicles at 2025-04-13T20:19:43.092658400Z
+2025-04-13 21:19:48 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 4 vehicles
+2025-04-13 21:19:48 [main] INFO  com.smartcity.TestClient - Traffic Data: 4 vehicles at 2025-04-13T20:19:48.086329400Z
+2025-04-13 21:19:53 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 99 vehicles
+2025-04-13 21:19:53 [main] INFO  com.smartcity.TestClient - Traffic Data: 99 vehicles at 2025-04-13T20:19:53.089682Z
+2025-04-13 21:19:58 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 44 vehicles
+2025-04-13 21:19:58 [main] INFO  com.smartcity.TestClient - Traffic Data: 44 vehicles at 2025-04-13T20:19:58.099040200Z
+2025-04-13 21:20:03 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 98 vehicles
+2025-04-13 21:20:03 [main] INFO  com.smartcity.TestClient - Traffic Data: 98 vehicles at 2025-04-13T20:20:03.086804700Z
+2025-04-13 21:20:08 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 60 vehicles
+2025-04-13 21:20:08 [main] INFO  com.smartcity.TestClient - Traffic Data: 60 vehicles at 2025-04-13T20:20:08.098051900Z
+2025-04-13 21:20:13 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 35 vehicles
+2025-04-13 21:20:13 [main] INFO  com.smartcity.TestClient - Traffic Data: 35 vehicles at 2025-04-13T20:20:13.087143400Z
+2025-04-13 21:20:18 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 66 vehicles
+2025-04-13 21:20:18 [main] INFO  com.smartcity.TestClient - Traffic Data: 66 vehicles at 2025-04-13T20:20:18.095864200Z
+2025-04-13 21:20:23 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 79 vehicles
+2025-04-13 21:20:23 [main] INFO  com.smartcity.TestClient - Traffic Data: 79 vehicles at 2025-04-13T20:20:23.087764500Z
+2025-04-13 21:20:28 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 24 vehicles
+2025-04-13 21:20:28 [main] INFO  com.smartcity.TestClient - Traffic Data: 24 vehicles at 2025-04-13T20:20:28.088986900Z
+2025-04-13 21:20:33 [pool-2-thread-1] INFO  com.smartcity.services.TrafficService - Traffic data sent: 77 vehicles
+2025-04-13 21:20:33 [main] INFO  com.smartcity.TestClient - Traffic Data: 77 vehicles at 2025-04-13T20:20:33.093286600Z
+2025-04-13 21:20:35 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down server...
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.services.RegistryService - [Self-Register] traffic at localhost:50051
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.services.RegistryService - [Self-Register] bin at localhost:50051
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.services.RegistryService - [Self-Register] noise at localhost:50051
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - ========================================
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Server listening on port 50051
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - Registered services: 3
+2025-04-13 21:21:13 [com.smartcity.ServerMain.main()] INFO  com.smartcity.ServerMain - ========================================
