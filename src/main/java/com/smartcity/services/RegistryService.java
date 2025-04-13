@@ -24,14 +24,24 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
         return services.size();
     }
 
-    public static void selfRegister(String serviceType, String address) {
-        if (instance != null) {
+    public static boolean selfRegister(String serviceType, String address) {
+        if (instance == null) {
+            logger.error("Cannot self-register {} at {} - Registry instance is null", serviceType, address);
+            return false;
+        }
+        
+        try {
             ServiceInfo info = ServiceInfo.newBuilder()
                     .setServiceType(serviceType)
+                    .setServiceId(serviceType + "-" + System.currentTimeMillis())
                     .setAddress(address)
                     .build();
             instance.services.put(info.getServiceType() + "@" + address, info);
             logger.info("[Self-Register] {} at {}", serviceType, address);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error during self-registration of {} at {}: {}", serviceType, address, e.getMessage());
+            return false;
         }
     }
 

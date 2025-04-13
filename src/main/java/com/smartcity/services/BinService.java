@@ -13,9 +13,18 @@ public class BinService extends BinGrpc.BinImplBase {
     private final Map<String, BinStatus> binStatuses = new ConcurrentHashMap<>();
     private static final int URGENT_THRESHOLD = 90;
     private static final int HIGH_THRESHOLD = 80;
+    private final String serviceAddress;
 
+    public BinService(String serviceAddress) {
+        this.serviceAddress = serviceAddress;
+        if (!RegistryService.selfRegister("bin", serviceAddress)) {
+            logger.warn("Failed to register bin service at {}", serviceAddress);
+        }
+    }
+    
+    // Default constructor for backward compatibility
     public BinService() {
-        RegistryService.selfRegister("bin", "localhost:50051");
+        this("localhost:50053");
     }
 
     @Override

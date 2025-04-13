@@ -13,9 +13,18 @@ public class NoiseService extends NoiseGrpc.NoiseImplBase {
     private static final float DEFAULT_DAY_THRESHOLD = 70.0f;
     private static final float DEFAULT_NIGHT_THRESHOLD = 55.0f;
     private final Map<String, NoiseThreshold> zoneThresholds = new ConcurrentHashMap<>();
+    private final String serviceAddress;
 
+    public NoiseService(String serviceAddress) {
+        this.serviceAddress = serviceAddress;
+        if (!RegistryService.selfRegister("noise", serviceAddress)) {
+            logger.warn("Failed to register noise service at {}", serviceAddress);
+        }
+    }
+    
+    // Default constructor for backward compatibility
     public NoiseService() {
-        RegistryService.selfRegister("noise", "localhost:50051");
+        this("localhost:50054");
     }
 
     @Override

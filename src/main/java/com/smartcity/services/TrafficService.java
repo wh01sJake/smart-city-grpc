@@ -13,9 +13,18 @@ public class TrafficService extends TrafficGrpc.TrafficImplBase {
     private final Map<String, IntersectionStatus> intersections = new ConcurrentHashMap<>();
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final AtomicInteger totalVehicles = new AtomicInteger(0);
+    private final String serviceAddress;
 
+    public TrafficService(String serviceAddress) {
+        this.serviceAddress = serviceAddress;
+        if (!RegistryService.selfRegister("traffic", serviceAddress)) {
+            logger.warn("Failed to register traffic service at {}", serviceAddress);
+        }
+    }
+    
+    // Default constructor for backward compatibility
     public TrafficService() {
-        RegistryService.selfRegister("traffic", "localhost:50051");
+        this("localhost:50052");
     }
 
     @Override
