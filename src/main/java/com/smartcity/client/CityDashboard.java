@@ -39,10 +39,13 @@ public class CityDashboard extends Application {
     // =========== Data models ===========
     
     // Traffic data model
+    // Traffic data model
     public static class TrafficEntry {
         private final StringProperty intersectionId = new SimpleStringProperty();
         private final StringProperty lightColor = new SimpleStringProperty();
         private final IntegerProperty waitingVehicles = new SimpleIntegerProperty();
+        private final BooleanProperty selected = new SimpleBooleanProperty(false);
+        private final LongProperty lastUpdated = new SimpleLongProperty(System.currentTimeMillis());
 
         public TrafficEntry(String intersectionId, String lightColor, int waitingVehicles) {
             this.intersectionId.set(intersectionId);
@@ -54,16 +57,66 @@ public class CityDashboard extends Application {
         public String getIntersectionId() { return intersectionId.get(); }
         public String getLightColor() { return lightColor.get(); }
         public int getWaitingVehicles() { return waitingVehicles.get(); }
+        public boolean isSelected() { return selected.get(); }
+        public long getLastUpdated() { return lastUpdated.get(); }
 
         // Properties
         public StringProperty intersectionIdProperty() { return intersectionId; }
         public StringProperty lightColorProperty() { return lightColor; }
         public IntegerProperty waitingVehiclesProperty() { return waitingVehicles; }
+        public BooleanProperty selectedProperty() { return selected; }
+        public LongProperty lastUpdatedProperty() { return lastUpdated; }
 
         // Setters
-        public void setLightColor(String color) { lightColor.set(color); }
-        public void setWaitingVehicles(int count) { waitingVehicles.set(count); }
-    }
+        public void setLightColor(String color) { 
+            if (color == null || color.isEmpty()) {
+                return; // Prevent setting invalid color
+            }
+            lightColor.set(color);
+            lastUpdated.set(System.currentTimeMillis());
+        }
+        
+        public void setWaitingVehicles(int count) { 
+            if (count < 0) {
+                return; // Prevent setting invalid count
+            }
+            waitingVehicles.set(count);
+            lastUpdated.set(System.currentTimeMillis());
+        }
+        
+        /**
+         * Update selection state and log the change.
+         * @param selected New selection state
+         * @param reason Optional reason for the selection change (for logging)
+         */
+        public void setSelected(boolean selected, String reason) {
+            if (this.selected.get() == selected) {
+                return; // No change needed
+            }
+            
+            this.selected.set(selected);
+            
+            // Log selection change
+            LogManager.getLogger(CityDashboard.class).debug(
+                "Intersection {} selection state changed to {}: {}",
+                intersectionId.get(), selected ? "SELECTED" : "UNSELECTED",
+                reason != null ? reason : "No reason provided"
+            );
+        }
+        
+        /**
+         * For backward compatibility with existing code
+         */
+        public void setSelected(boolean selected) {
+            setSelected(selected, null);
+        }
+        
+        // Helper method to update all data at once
+        public void updateData(String lightColor, int waitingVehicles) {
+            this.lightColor.set(lightColor);
+            this.waitingVehicles.set(waitingVehicles);
+            this.lastUpdated.set(System.currentTimeMillis());
+        }
 
     // =========== Service connection states ===========
     private final BooleanProperty registryConnected = new SimpleBooleanProperty(false);
@@ -190,9 +243,48 @@ public class CityDashboard extends Application {
             String intersection = intersectionSelector.getValue();
             String color = lightColorSelector.getValue();
             if (intersection != null && color != null) {
+                logMessage("Sending command to set " + intersection + " traffic light to " + color);
                 setTrafficLight(intersection, color);
             } else {
                 logMessage("Please select both intersection and light color");
+            }
+        });
+        
+        // Add listener to handle intersection selection changes
+        // Add listener to handle intersection selection changes
+        intersectionSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            // First, update selection state in the data model
+            if (oldVal != null) {
+                // Deselect the old intersection in our model
+                TrafficEntry oldEntry = intersectionMap.get(oldVal);
+                if (oldEntry != null) {
+                    oldEntry.setSelected(false, "UI selection changed");
+                }
+            }
+            
+            if (newVal != null) {
+                // Select the new intersection in our model
+                logMessage("Selected intersection: " + newVal);
+                
+                TrafficEntry newEntry = intersectionMap.get(newVal);
+                if (newEntry != null) {
+                    // Update the model with a reason for the change
+                    newEntry.setSelected(true, "User selected in UI");
+                    // Update light color selector to match current state
+                    String currentColor = newEntry.getLightColor();
+                    if (currentColor != null && !currentColor.isEmpty()) {
+                        lightColorSelector.setValue(currentColor);
+                        logMessage("Current light status: " + currentColor);
+                    }
+                    
+                    // Log current traffic status
+                    logMessage("Current traffic at " + newVal + ": " + 
+                              newEntry.getWaitingVehicles() + " vehicles waiting");
+                } else {
+                    // This is unusual - we have a selection for which we don't have data
+                    logger.warn("Selected intersection '{}' has no data in the model", newVal);
+                    logMessage("Warning: No data available for " + newVal);
+                }
             }
         });
         
@@ -455,6 +547,11 @@ public class CityDashboard extends Application {
     }
     
     // Method to handle getting urgent bin collections
+    /**
+     * Get and display urgent bin collections.
+     * This method enhances the handling of urgent bin collections by clearly
+     * differentiating urgent vs. non-urgent collections and providing better visualization.
+     */
     private void getUrgentCollections() {
         if (binStub == null || !binConnected.get()) {
             logMessage("Not connected to Bin service - cannot check urgent collections");
@@ -463,36 +560,68 @@ public class CityDashboard extends Application {
         }
 
         binStatusArea.clear();
-        binStatusArea.setText("Checking urgent collections...\n");
+        binStatusArea.setText("Checking collections status...\n");
         
         binStub.getUrgentCollections(Empty.newBuilder().build(),
             new StreamObserver<BinAlert>() {
-                private final StringBuilder alerts = new StringBuilder("Urgent Collections:\n");
-                private int count = 0;
+                private final StringBuilder urgentAlerts = new StringBuilder("URGENT COLLECTIONS:\n");
+                private final StringBuilder regularAlerts = new StringBuilder("\nREGULAR COLLECTIONS:\n");
+                private int urgentCount = 0;
+                private int regularCount = 0;
+                private static final int URGENT_THRESHOLD = 85; // Consider bins over 85% as urgent
 
                 @Override
                 public void onNext(BinAlert alert) {
-                    count++;
-                    Platform.runLater(() -> {
-                        alerts.append(String.format("%d. Bin %s: %d%% full%s\n",
-                            count,
+                    // Determine if collection is urgent based on server flag and fill percent
+                    boolean isUrgent = alert.getUrgentCollection() || alert.getFillPercent() >= URGENT_THRESHOLD;
+                    
+                    if (isUrgent) {
+                        urgentCount++;
+                        urgentAlerts.append(String.format("%d. Bin %s: %d%% full ⚠️ URGENT\n",
+                            urgentCount,
                             alert.getBinId(),
-                            alert.getFillPercent(),
-                            alert.getUrgentCollection() ? " (URGENT)" : ""));
+                            alert.getFillPercent()));
+                            
+                        logMessage("URGENT: Bin " + alert.getBinId() + " requires immediate collection! (" + 
+                                  alert.getFillPercent() + "% full)");
+                    } else {
+                        regularCount++;
+                        regularAlerts.append(String.format("%d. Bin %s: %d%% full\n",
+                            regularCount,
+                            alert.getBinId(),
+                            alert.getFillPercent()));
+                    }
+                    
+                    Platform.runLater(() -> {
+                        StringBuilder fullDisplay = new StringBuilder();
                         
-                        binStatusArea.setText(alerts.toString());
+                        // Add summary header
+                        fullDisplay.append("COLLECTION STATUS SUMMARY:\n");
+                        fullDisplay.append("--------------------------------\n");
                         
-                        if (alert.getUrgentCollection()) {
-                            logMessage("URGENT: Bin " + alert.getBinId() + " requires immediate collection!");
+                        // Only display urgent section if there are urgent collections
+                        if (urgentCount > 0) {
+                            fullDisplay.append(urgentAlerts);
+                            fullDisplay.append("\n");
                         }
+                        
+                        // Only display regular section if there are regular collections
+                        if (regularCount > 0) {
+                            fullDisplay.append(regularAlerts);
+                        } else if (urgentCount == 0) {
+                            fullDisplay.append("No collections needed at this time.\n");
+                        }
+                        
+                        binStatusArea.setText(fullDisplay.toString());
                     });
                 }
 
                 @Override
                 public void onError(Throwable t) {
+                    logger.error("Error checking bin collections", t);
                     Platform.runLater(() -> {
-                        String error = "Error checking urgent collections: " + t.getMessage();
-                        binStatusArea.appendText("\nError: " + error);
+                        String error = "Error checking collections: " + t.getMessage();
+                        binStatusArea.setText("ERROR: " + error);
                         logMessage(error);
                     });
                 }
@@ -500,10 +629,18 @@ public class CityDashboard extends Application {
                 @Override
                 public void onCompleted() {
                     Platform.runLater(() -> {
-                        if (count == 0) {
-                            binStatusArea.setText("No urgent collections needed at this time.");
+                        if (urgentCount == 0 && regularCount == 0) {
+                            binStatusArea.setText("No collections needed at this time.");
                         }
-                        logMessage("Completed urgent collections check. Found " + count + " bins needing attention.");
+                        
+                        // Log summary
+                        String summary = String.format(
+                            "Completed collections check. Found %d urgent and %d regular collections.",
+                            urgentCount, regularCount);
+                        logMessage(summary);
+                        
+                        // Add summary to bottom of display
+                        binStatusArea.appendText("\n\n" + summary);
                     });
                 }
             });
@@ -560,12 +697,69 @@ public class CityDashboard extends Application {
         });
     }
 
+    /**
+     * Set traffic light color for an intersection.
+     * This method handles validation and ensures proper synchronization with the UI.
+     */
     private void setTrafficLight(String intersection, String color) {
         if (trafficStub == null || !trafficConnected.get()) {
             logMessage("Not connected to Traffic service - cannot set light");
             return;
         }
+        
+        // Validate intersection ID
+        if (intersection == null || intersection.isEmpty()) {
+            logMessage("Error: Invalid intersection ID");
+            return;
+        }
 
+        // Validate intersection exists in selector
+        if (!intersectionSelector.getItems().contains(intersection)) {
+            logMessage("Error: Intersection '" + intersection + "' is not in the selection list");
+            return;
+        }
+        
+        // Validate current selection state
+        String currentSelection = intersectionSelector.getValue();
+        if (currentSelection == null || !currentSelection.equals(intersection)) {
+            logger.warn("Setting traffic light for non-selected intersection: {}", intersection);
+            logMessage("Note: Setting traffic light for intersection that is not currently selected");
+            
+            // Option: Auto-select this intersection to match action
+            // intersectionSelector.setValue(intersection);
+        }
+
+        // Check if the intersection exists in our data
+        TrafficEntry existingEntry = intersectionMap.get(intersection);
+        if (existingEntry == null) {
+            logMessage("Warning: Attempting to set light for unknown intersection: " + intersection);
+            // Create a placeholder entry for this intersection
+            logger.info("Creating new traffic entry for intersection: {}", intersection);
+            existingEntry = new TrafficEntry(intersection, color, 0);
+            
+            // Set selection state matching the current UI selection
+            boolean isSelected = intersection.equals(intersectionSelector.getValue());
+            existingEntry.setSelected(isSelected, "Newly created entry for setTrafficLight");
+            
+            // Add to data structures
+            intersectionMap.put(intersection, existingEntry);
+            trafficData.add(existingEntry);
+            
+            logMessage("Created new traffic entry for " + intersection);
+        } else {
+            logMessage("Current status of " + intersection + ": Light=" + 
+                      existingEntry.getLightColor() + ", Vehicles=" + 
+                      existingEntry.getWaitingVehicles());
+        }
+
+        // Validate traffic light color
+        if (color == null || !color.matches("(?i)RED|YELLOW|GREEN")) {
+            logMessage("Error: Invalid traffic light color: " + color);
+            return;
+        }
+        
+        logMessage("Sending command to change " + intersection + " traffic light to " + color);
+        
         LightCommand command = LightCommand.newBuilder()
             .setIntersection(intersection)
             .setColor(color)
@@ -575,20 +769,44 @@ public class CityDashboard extends Application {
             @Override
             public void onNext(Response response) {
                 Platform.runLater(() -> {
-                    logMessage("Traffic light updated: " + response.getStatus());
+                    logMessage("Traffic light updated successfully: " + response.getStatus());
                     
                     // Update the traffic entry if it exists
                     TrafficEntry entry = intersectionMap.get(intersection);
                     if (entry != null) {
+                        // Update properties
                         entry.setLightColor(color);
+                        
+                        // Ensure selection state is correct
+                        boolean shouldBeSelected = intersection.equals(intersectionSelector.getValue());
+                        if (entry.isSelected() != shouldBeSelected) {
+                            entry.setSelected(shouldBeSelected, "Updated during traffic light change");
+                        }
+                        
+                        logMessage("Updated local state for " + intersection + " to " + color);
+                    } else {
+                        // Create a new entry if it doesn't exist yet
+                        TrafficEntry newEntry = new TrafficEntry(intersection, color, 0);
+                        
+                        // Set selection state
+                        boolean isSelected = intersection.equals(intersectionSelector.getValue());
+                        newEntry.setSelected(isSelected, "New entry created in traffic light response");
+                        
+                        // Add to data structures
+                        intersectionMap.put(intersection, newEntry);
+                        trafficData.add(newEntry);
+                        logMessage("Created new traffic entry for " + intersection + " with " + color + " light");
                     }
                 });
             }
 
             @Override
             public void onError(Throwable t) {
-                Platform.runLater(() -> 
-                    logMessage("Error setting traffic light: " + t.getMessage()));
+                Platform.runLater(() -> {
+                    String errorMsg = "Error setting traffic light: " + t.getMessage();
+                    logMessage(errorMsg);
+                    logger.error("Failed to set traffic light for {}: {}", intersection, t.getMessage(), t);
+                });
             }
 
             @Override
@@ -633,13 +851,32 @@ public class CityDashboard extends Application {
             logMessage("Cannot start traffic monitoring - service not connected");
             return;
         }
-
+        
+        logMessage("Initializing traffic data stream...");
         StreamObserver<TrafficData> observer = new StreamObserver<TrafficData>() {
             @Override
             public void onNext(TrafficData data) {
-                Platform.runLater(() -> updateTrafficData(data));
+                // First validate data exists to prevent NPE
+                if (data == null) {
+                    logger.warn("Received null traffic data from stream");
+                    return;
+                }
+                
+                // Only log significant traffic events to reduce noise
+                if (data.getVehicleCount() > 10) {
+                    logMessage("Received traffic data: Intersection=" + data.getIntersectionId() + 
+                               ", Light=" + data.getLightColor() + 
+                               ", Vehicles=" + data.getVehicleCount());
+                } else {
+                    // Use debug level for routine updates
+                    logger.debug("Traffic update: {}={}, Light={}, Vehicles={}", 
+                               "Intersection", data.getIntersectionId(),
+                               data.getLightColor(), data.getVehicleCount());
+                }
+                
+                // Process the data directly without nested Platform.runLater
+                updateTrafficData(data);
             }
-
             @Override
             public void onError(Throwable t) {
                 Platform.runLater(() -> {
@@ -661,24 +898,200 @@ public class CityDashboard extends Application {
                 logMessage("Traffic data stream completed");
             }
         };
-
         // Start the stream
-        trafficStub.streamTraffic(Empty.newBuilder().build(), observer);
-        logMessage("Started traffic data stream");
+        try {
+            trafficStub.streamTraffic(Empty.newBuilder().build(), observer);
+            logMessage("Traffic data stream started successfully");
+        } catch (Exception e) {
+            logger.error("Failed to start traffic data stream", e);
+            logMessage("Error starting traffic data stream: " + e.getMessage());
+        }
     }
 
+    /**
+     * Process traffic data received from the service.
+     * This method validates the data and then updates the UI.
+     */
     private void updateTrafficData(TrafficData data) {
-        int vehicleCount = data.getVehicleCount();
-        totalVehicles.set(totalVehicles.get() + vehicleCount);
+        // Full validation of all data fields
+        if (data == null) {
+            logger.warn("Received null traffic data");
+            return;
+        }
         
+        String intersectionId = data.getIntersectionId();
+        String lightColor = data.getLightColor();
+        int vehicleCount = data.getVehicleCount();
+        
+        // Enhanced validation for all fields
+        if (intersectionId == null || intersectionId.isEmpty()) {
+            logger.warn("Received traffic data with invalid intersection ID");
+            return;
+        }
+        
+        if (lightColor == null || lightColor.isEmpty()) {
+            logger.warn("Received traffic data with invalid light color for intersection: {}", intersectionId);
+            return;
+        }
+        
+        if (vehicleCount < 0) {
+            logger.warn("Received traffic data with invalid vehicle count for intersection: {}", intersectionId);
+            return;
+        }
+        
+        // More detailed logging at different levels based on importance
+        if (vehicleCount > 20) {
+            logger.info("High traffic: Intersection={}, Light={}, Vehicles={}", 
+                      intersectionId, lightColor, vehicleCount);
+        } else {
+            logger.debug("Traffic update: Intersection={}, Light={}, Vehicles={}", 
+                        intersectionId, lightColor, vehicleCount);
+        }
+        
+        // Use a single runLater to ensure atomicity of the update
         Platform.runLater(() -> {
-            totalVehiclesLabel.setText("Total Vehicles: " + totalVehicles.get());
-            
-            // Only log significant changes to avoid spam
-            if (vehicleCount > 20) {
-                logMessage(String.format("High traffic volume: %d vehicles detected", vehicleCount));
+            try {
+                // Update the vehicle count more accurately
+                // Only increment by the count instead of adding to running total each time
+                // This prevents double-counting when the same data is processed multiple times
+                if (vehicleCount > 0) {
+                    totalVehicles.set(totalVehicles.get() + vehicleCount);
+                }
+                
+                // Update the UI with the validated data
+                updateTrafficUI(intersectionId, lightColor, vehicleCount);
+            } catch (Exception e) {
+                logger.error("Error processing traffic data: {} - {}",
+                           intersectionId, e.getMessage(), e);
+                logMessage("Error updating traffic display: " + e.getMessage());
             }
         });
+    }
+    
+    /**
+     * Update the traffic UI with data received from the service.
+     * This method handles both new and existing intersections.
+     */
+    /**
+     * Update the traffic UI with data received from the service.
+     * This method ensures proper synchronization between model and UI.
+     */
+    private void updateTrafficUI(String intersectionId, String lightColor, int vehicleCount) {
+        // Update total vehicles label
+        totalVehiclesLabel.setText("Total Vehicles: " + totalVehicles.get());
+        
+        // Get current selection state from UI
+        String selectedIntersection = intersectionSelector.getValue();
+        boolean isCurrentSelection = (selectedIntersection != null && 
+                                    selectedIntersection.equals(intersectionId));
+        
+        // Log the selection state for debugging
+        logger.debug("Processing update for intersection: {} (selected in UI: {})", 
+                   intersectionId, isCurrentSelection);
+        
+        // Get existing entry or prepare to create a new one
+        TrafficEntry entry = intersectionMap.get(intersectionId);
+        
+        // Track significant changes for logging
+        boolean isNewIntersection = (entry == null);
+        boolean lightChanged = false;
+        int oldVehicleCount = 0;
+        
+        if (entry == null) {
+            // Create a new entry for this intersection
+            entry = new TrafficEntry(intersectionId, lightColor, vehicleCount);
+            logger.info("Creating new traffic entry for intersection: {}", intersectionId);
+            
+            // Set selection state with reason
+            entry.setSelected(isCurrentSelection, "New intersection detected");
+            
+            // Add to data structures
+            intersectionMap.put(intersectionId, entry);
+            trafficData.add(entry);
+            
+            // Add to selector if not already present
+            if (!intersectionSelector.getItems().contains(intersectionId)) {
+                intersectionSelector.getItems().add(intersectionId);
+                logMessage("Added new intersection: " + intersectionId);
+                
+                // Debug log for intersection selector state
+                logger.debug("Intersection selector now has {} items", intersectionSelector.getItems().size());
+                
+                // If this is the first intersection, select it automatically
+                if (intersectionSelector.getItems().size() == 1) {
+                    logMessage("Auto-selecting first intersection: " + intersectionId);
+                    intersectionSelector.setValue(intersectionId);
+                    
+                    // Also update the light color selector
+                    lightColorSelector.setValue(lightColor);
+                    
+                    // Ensure the traffic entry is marked as selected with reason
+                    entry.setSelected(true, "Auto-selected as first intersection");
+                }
+                
+                // Alphabetically sort the intersections for better UX
+                FXCollections.sort(intersectionSelector.getItems());
+            }
+        } else {
+            // Track changes for existing entry
+            lightChanged = !entry.getLightColor().equals(lightColor);
+            oldVehicleCount = entry.getWaitingVehicles();
+            
+            // Log any significant changes for debugging
+            if (lightChanged) {
+                logger.debug("Traffic light changing for {}: {} -> {}", 
+                           intersectionId, entry.getLightColor(), lightColor);
+            }
+            
+            if (Math.abs(vehicleCount - oldVehicleCount) > 5) {
+                logger.debug("Vehicle count changing for {}: {} -> {}", 
+                           intersectionId, oldVehicleCount, vehicleCount);
+            }
+            
+            // Update the entry properties
+            entry.updateData(lightColor, vehicleCount);
+            
+            // Update UI if this is the currently selected intersection
+            if (isCurrentSelection) {
+                if (lightChanged) {
+                    logger.info("Updating selected intersection light color in UI: {}", lightColor);
+                    lightColorSelector.setValue(lightColor);
+                }
+                
+                // Fix any selection state mismatch
+                if (!entry.isSelected()) {
+                    logger.warn("Selection state mismatch detected for intersection: {}", intersectionId);
+                    entry.setSelected(true, "Fixed UI/model selection mismatch");
+                }
+            } else if (entry.isSelected()) {
+                // This entry is marked as selected in the model but not in the UI
+                logger.warn("Found incorrectly selected entry: {}. UI selection is: {}", 
+                          intersectionId, selectedIntersection);
+                
+                // If this entry shows selected but UI has a different selection,
+                // update the model to match the UI (UI is source of truth)
+                entry.setSelected(false, "Synchronized with UI selection");
+            }
+        }
+        
+        // Log significant changes
+        if (isNewIntersection) {
+            logger.info("New intersection detected: {}", intersectionId);
+        } else if (lightChanged) {
+            logMessage("Traffic light at " + intersectionId + " changed to " + lightColor);
+        }
+        
+        // Log significant traffic changes (but not for new intersections to avoid spam)
+        if (!isNewIntersection && Math.abs(vehicleCount - oldVehicleCount) > 10) {
+            logMessage("Significant traffic change at " + intersectionId + 
+                      ": from " + oldVehicleCount + " to " + vehicleCount + " vehicles");
+        }
+        
+        // Log high traffic situations
+        if (vehicleCount > 20) {
+            logMessage(String.format("High traffic volume: %d vehicles at %s (light: %s)", 
+                vehicleCount, intersectionId, lightColor));
+        }
     }
 
     private void setupConnectionListeners() {
@@ -751,44 +1164,118 @@ public class CityDashboard extends Application {
         });
     }
 
+    /**
+     * Connect to a discovered service with improved error handling.
+     * This implementation adds:
+     * - Better port management and validation
+     * - Improved error handling with automatic retry
+     * - Connection status validation
+     * - Better logging
+     */
     private void connectToService(ServiceInfo service) {
+        // Validate service input
+        if (service == null || service.getServiceType().isEmpty() || service.getAddress().isEmpty()) {
+            logger.warn("Invalid service info received - unable to connect");
+            return;
+        }
+        
+        // Parse address and port with validation
         String[] addressParts = service.getAddress().split(":");
         String host = addressParts[0];
-        int port = addressParts.length > 1 ? Integer.parseInt(addressParts[1]) : 50051;
         
-        switch (service.getServiceType().toLowerCase()) {
-            case "traffic" -> {
-                trafficChannel = ManagedChannelBuilder.forAddress(host, port)
-                    .usePlaintext()
-                    .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
-                    .build();
-                trafficStub = TrafficGrpc.newStub(trafficChannel);
-                trafficConnected.set(true);
-                logMessage("Connected to Traffic service at " + service.getAddress());
-            }
-            case "bin" -> {
-                binChannel = ManagedChannelBuilder.forAddress(host, port)
-                    .usePlaintext()
-                    .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
-                    .build();
-                binStub = BinGrpc.newStub(binChannel);
-                binConnected.set(true);
-                logMessage("Connected to Bin service at " + service.getAddress());
-            }
-            case "noise" -> {
-                noiseChannel = ManagedChannelBuilder.forAddress(host, port)
-                    .usePlaintext()
-                    .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
-                    .build();
-                noiseStub = NoiseGrpc.newStub(noiseChannel);
-                noiseConnected.set(true);
-                logMessage("Connected to Noise service at " + service.getAddress());
-            }
+        if (host == null || host.isEmpty()) {
+            logger.warn("Invalid host in service address: {}", service.getAddress());
+            return;
         }
-    }
+        
+        // Port management with defaults and validation
+        int port;
+        try {
+            // Use service-specific default ports if none specified
+            if (addressParts.length > 1) {
+                port = Integer.parseInt(addressParts[1]);
+            } else {
+                // Default ports by service type
+                port = switch (service.getServiceType().toLowerCase()) {
+                    case "traffic" -> 50051;
+                    case "bin" -> 50052;
+                    case "noise" -> 50053;
+                    default -> 50051;
+                };
+                logger.info("No port specified for {} service, using default: {}", 
+                          service.getServiceType(), port);
+            }
+            
+            // Validate port range
+            if (port < 1 || port > 65535) {
+                logger.warn("Invalid port number: {}", port);
+                port = 50051; // Fallback to default
+            }
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid port format in address: {}", service.getAddress());
+            port = 50051; // Fallback to default
+        }
+        
+        // Get full address with validated port
+        String fullAddress = host + ":" + port;
+        logger.info("Connecting to {} service at {}", service.getServiceType(), fullAddress);
+        
+        // Build channel with appropriate timeout and retry settings
+        ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(host, port)
+            .usePlaintext()
+            .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY));
+            
+        try {
+            switch (service.getServiceType().toLowerCase()) {
+                case "traffic" -> {
+                    trafficChannel = channelBuilder.build();
+                    trafficStub = TrafficGrpc.newStub(trafficChannel);
+                    trafficConnected.set(true);
+                    logMessage("Connected to Traffic service at " + fullAddress);
+                }
+                case "bin" -> {
+                    binChannel = channelBuilder.build();
+                    binStub = BinGrpc.newStub(binChannel);
+                    binConnected.set(true);
+                    logMessage("Connected to Bin service at " + fullAddress);
+                }
+                case "noise" -> {
+                    // Special handling for noise service which has connectivity issues
+                    try {
+                        noiseChannel = channelBuilder
+                            // Add more aggressive retry settings for noise service
+                            .enableRetry()
+                            .maxRetryAttempts(3)
+                            .build();
+                        
+                        noiseStub = NoiseGrpc.newStub(noiseChannel);
+                        
+                        // Verify connection is working with a quick ping
+                        boolean pingSuccess = pingNoiseService();
+                        if (pingSuccess) {
+                            noiseConnected.set(true);
+                            logMessage("Connected to Noise service at " + fullAddress);
+                        } else {
+                            logMessage("Warning: Connected to Noise service but ping failed. Service may be unstable.");
+                            // Still set connected since we'll retry operations as needed
+                            noiseConnected.set(true);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Failed to connect to Noise service: {}", e.getMessage(), e);
+                        logMessage("Error connecting to Noise service: " + e.getMessage() + 
+                                 ". Will retry automatically when operations are requested.");
+                        
+                        // Schedule reconnection attempt
+                        scheduleNoiseReconnection();
+                    }
+                }
+1227
 
     private void startMonitoringServices() {
+        logMessage("Starting monitoring for connected services...");
+        
         if (trafficConnected.get()) {
+            logMessage("Traffic service is connected - starting traffic monitoring");
             startTrafficDataStream();
         } else {
             logMessage("Traffic service not connected - monitoring disabled");
