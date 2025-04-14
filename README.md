@@ -1,95 +1,87 @@
-# Smart City Project - Requirements Assessment
+# Smart City Monitoring and Control System
 
 ## Project Overview
-This project implements a distributed system for a Smart City environment, featuring multiple microservices that communicate via gRPC. The implementation includes traffic management, waste management, and noise monitoring services with a central service registry and graphical user interface.
+The Smart City Monitoring and Control System is a distributed application that simulates an interconnected network of smart services for urban management. Built using gRPC for communication between services, the system provides real-time monitoring and control capabilities for various city services through a centralized dashboard.
 
-## Requirements Assessment
+## Key Features
 
-### Domain Selection (Smart Cities) ✓
-- **Requirement**: Domain selection based on student ID ending with 9
-- **Implementation**: Smart Cities domain correctly implemented with traffic automation and public services
-- **Evidence**: Services focus on urban management aspects (traffic lights, waste bins, noise monitoring)
+### Multiple Integrated Services
+- **Traffic Management Service**: Controls traffic lights and monitors vehicle flow at intersections
+- **Waste Management Service**: Tracks bin fill levels and optimizes collection routes
+- **Noise Monitoring Service**: Measures noise levels across different zones with configurable thresholds
+- **Registry Service**: Enables automatic service discovery and registration
 
-### Minimum 3 Services Requirement ✓
-- **Requirement**: At least 3 services that simulate devices or operations
-- **Implementation**: 4 services implemented:
-  - TrafficService: Controls traffic lights and streams traffic data
-  - BinService: Monitors waste bin fill levels and calculates collection routes
-  - NoiseService: Monitors environmental noise levels and issues alerts
-  - RegistryService: Handles service discovery and registration
-- **Evidence**: Each service has a dedicated Java implementation file with correct gRPC integration
+### Advanced Communication Patterns
+The system demonstrates all four gRPC communication styles:
+- **Unary RPC**: For simple request-response operations (e.g., setting traffic lights)
+- **Server Streaming**: For continuous data monitoring (e.g., traffic flow updates)
+- **Client Streaming**: For batch reporting (e.g., bin status updates)
+- **Bidirectional Streaming**: For real-time interactive monitoring (e.g., noise alerts)
 
-### Service Discovery ✓
-- **Requirement**: Devices/services should be discoverable automatically
-- **Implementation**: Robust service registry with self-registration mechanism
-- **Evidence**: `RegistryService.java` implements registration and discovery with proper concurrency handling
+### Security and Reliability
+- API key authentication for secure service access
+- Comprehensive error handling and logging
+- Automatic service discovery and reconnection
+- Simulated data generation for demonstration purposes
 
-### gRPC Communication ✓
-- **Requirement**: Services communicate using defined .proto files
-- **Implementation**: Well-structured proto file defining all service interfaces
-- **Evidence**: Implementation of all four gRPC styles:
-  - Simple RPC: `setLight()`, `getRoute()`, `register()`
-  - Server Streaming: `streamTraffic()`, `discoverServices()`
-  - Client Streaming: `reportBins()`
-  - Bi-directional Streaming: `monitorNoise()`
+### User Interface
+A JavaFX-based dashboard provides:
+- Real-time visualization of city service data
+- Interactive controls for managing traffic, waste collection, and noise thresholds
+- Service status monitoring and system logs
+- Responsive design with intuitive tab-based navigation
 
-### Security Features ✓
-- **Requirement**: Basic authentication for access control
-- **Implementation**: API key authentication via gRPC interceptors
-- **Evidence**: `ApiKeyInterceptor.java` validates authentication tokens on all requests
+## Technical Implementation
 
-### Data Logging ✓
-- **Requirement**: Capture logs for analytics
-- **Implementation**: Comprehensive logging using Log4j throughout all services
-- **Evidence**: Log statements for service operations, errors, and important events
+### Architecture
+The system follows a microservices architecture where each service operates independently but communicates through well-defined gRPC interfaces. The Registry Service acts as the central hub for service discovery, allowing for dynamic scaling and resilience.
 
-### GUI Controller ✓
-- **Requirement**: Graphical interface for monitoring and controlling services
-- **Implementation**: JavaFX-based dashboard with tabs for each service type
-- **Evidence**: `CityDashboard.java` provides UI for:
-  - Traffic control (light setting and data streaming)
-  - Bin status monitoring and reporting
-  - Noise level monitoring with alerts
-  - Service discovery and browsing
+### Technologies Used
+- **Java**: Core programming language
+- **gRPC**: For efficient service communication
+- **Protocol Buffers**: For service interface definition
+- **JavaFX**: For the graphical user interface
+- **Log4j**: For comprehensive logging
+- **Maven**: For project management and dependency handling
 
-## Technical Implementation Strengths
-1. **Thread Safety**: Proper concurrency handling with `ConcurrentHashMap` and thread management
-2. **Error Handling**: Comprehensive exception handling in both services and client
-3. **Modularity**: Clear separation of concerns with well-defined service boundaries
-4. **Protocol Design**: Well-structured protocol definitions in the proto file
+## Getting Started
 
-## Potential Enhancements
-1. Documentation expansion for API components
-2. Configuration externalization (API keys, service addresses)
-3. UI styling improvements
-4. Error recovery mechanisms (retries, circuit breakers)
+### Prerequisites
+- Java 11 or higher
+- Maven 3.6 or higher
 
-## Conclusion
-The project fully satisfies all required elements of the distributed systems assignment. The implementation demonstrates a strong understanding of distributed systems concepts, gRPC communication patterns, and practical software engineering principles.
+### Running the Application
 
-## Testing Instructions
-
-1. Start the server:
+1. Start the server with all services:
 ```
 mvn compile exec:java -Dexec.mainClass="com.smartcity.ServerMain"
 ```
 
-2. Run the test client:
+2. Launch the dashboard client:
 ```
-mvn compile exec:java -Dexec.mainClass="com.smartcity.TestClient"
+mvn compile exec:java -Dexec.mainClass="com.smartcity.client.ClientMain"
 ```
 
-The test client will verify the functionality of all services:
-1. Traffic light control and traffic stream monitoring
-2. Bin status reporting with urgent collection alerts
-3. Noise monitoring with threshold-based alerts
-4. Service discovery for all registered services
+### Usage Guide
+1. The dashboard will automatically connect to available services
+2. Use the tabs to navigate between different service controls:
+   - **Dashboard**: Overview of all services
+   - **Traffic**: Control traffic lights and view vehicle counts
+   - **Waste**: Monitor bin fill levels and get collection routes
+   - **Noise**: Set noise thresholds and view alerts
+   - **System**: View service status and logs
 
-## Implementation Notes
+## Project Structure
+- `src/main/proto`: Protocol buffer definitions
+- `src/main/java/com/smartcity/services`: Service implementations
+- `src/main/java/com/smartcity/client`: Client and GUI implementation
+- `src/main/java/com/smartcity/security`: Authentication components
 
-1. All services use proper error handling and logging
-2. API key authentication is enforced on all service calls
-3. The implementation demonstrates all four gRPC communication patterns
-4. Services register themselves with the registry service for discovery
-5. Each service implements domain-appropriate error handling and status tracking
+## Future Enhancements
+- Additional smart city services (e.g., energy management, public transport)
+- Enhanced data visualization and analytics
+- Mobile client application
+- Integration with real IoT devices
 
+## Acknowledgments
+This project was developed as part of the Distributed Systems course at the National College of Ireland.
