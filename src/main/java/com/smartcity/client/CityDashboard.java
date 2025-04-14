@@ -11,19 +11,25 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,90 +41,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CityDashboard extends Application {
     private static final Logger logger = LogManager.getLogger(CityDashboard.class);
     private static final String REGISTRY_ADDRESS = "localhost:50050";
+    private static final String APP_TITLE = "Smart City Dashboard";
+    private static final int WINDOW_WIDTH = 1024;
+    private static final int WINDOW_HEIGHT = 768;
 
-    // =========== Data models ===========
-    
-    // Traffic data model
-    // Traffic data model
-    public static class TrafficEntry {
-        private final StringProperty intersectionId = new SimpleStringProperty();
-        private final StringProperty lightColor = new SimpleStringProperty();
-        private final IntegerProperty waitingVehicles = new SimpleIntegerProperty();
-        private final BooleanProperty selected = new SimpleBooleanProperty(false);
-        private final LongProperty lastUpdated = new SimpleLongProperty(System.currentTimeMillis());
-
-        public TrafficEntry(String intersectionId, String lightColor, int waitingVehicles) {
-            this.intersectionId.set(intersectionId);
-            this.lightColor.set(lightColor);
-            this.waitingVehicles.set(waitingVehicles);
-        }
-
-        // Getters
-        public String getIntersectionId() { return intersectionId.get(); }
-        public String getLightColor() { return lightColor.get(); }
-        public int getWaitingVehicles() { return waitingVehicles.get(); }
-        public boolean isSelected() { return selected.get(); }
-        public long getLastUpdated() { return lastUpdated.get(); }
-
-        // Properties
-        public StringProperty intersectionIdProperty() { return intersectionId; }
-        public StringProperty lightColorProperty() { return lightColor; }
-        public IntegerProperty waitingVehiclesProperty() { return waitingVehicles; }
-        public BooleanProperty selectedProperty() { return selected; }
-        public LongProperty lastUpdatedProperty() { return lastUpdated; }
-
-        // Setters
-        public void setLightColor(String color) { 
-            if (color == null || color.isEmpty()) {
-                return; // Prevent setting invalid color
-            }
-            lightColor.set(color);
-            lastUpdated.set(System.currentTimeMillis());
-        }
-        
-        public void setWaitingVehicles(int count) { 
-            if (count < 0) {
-                return; // Prevent setting invalid count
-            }
-            waitingVehicles.set(count);
-            lastUpdated.set(System.currentTimeMillis());
-        }
-        
-        /**
-         * Update selection state and log the change.
-         * @param selected New selection state
-         * @param reason Optional reason for the selection change (for logging)
-         */
-        public void setSelected(boolean selected, String reason) {
-            if (this.selected.get() == selected) {
-                return; // No change needed
-            }
-            
-            this.selected.set(selected);
-            
-            // Log selection change
-            LogManager.getLogger(CityDashboard.class).debug(
-                "Intersection {} selection state changed to {}: {}",
-                intersectionId.get(), selected ? "SELECTED" : "UNSELECTED",
-                reason != null ? reason : "No reason provided"
-            );
-        }
-        
-        /**
-         * For backward compatibility with existing code
-         */
-        public void setSelected(boolean selected) {
-            setSelected(selected, null);
-        }
-        
-        // Helper method to update all data at once
-        public void updateData(String lightColor, int waitingVehicles) {
-            this.lightColor.set(lightColor);
-            this.waitingVehicles.set(waitingVehicles);
-            this.lastUpdated.set(System.currentTimeMillis());
-        }
-
-    // =========== Service connection states ===========
+    // Service connection states
     private final BooleanProperty registryConnected = new SimpleBooleanProperty(false);
     private final BooleanProperty trafficConnected = new SimpleBooleanProperty(false);
     private final BooleanProperty binConnected = new SimpleBooleanProperty(false);
@@ -126,1018 +53,705 @@ public class CityDashboard extends Application {
     private final AtomicBoolean isConnecting = new AtomicBoolean(false);
     private final AtomicBoolean shouldStop = new AtomicBoolean(false);
 
-    // =========== gRPC channels and stubs ===========
+    // gRPC channels and stubs
     private ManagedChannel registryChannel;
     private ManagedChannel trafficChannel;
     private ManagedChannel binChannel;
     private ManagedChannel noiseChannel;
-    
+
     private RegistryGrpc.RegistryStub registryStub;
     private TrafficGrpc.TrafficStub trafficStub;
+    private TrafficGrpc.TrafficBlockingStub trafficBlockingStub;
     private BinGrpc.BinStub binStub;
     private NoiseGrpc.NoiseStub noiseStub;
 
-    // =========== UI Components ===========
-    // Traffic tab
+    // Executor for background tasks
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+    private ScheduledFuture<?> noiseMonitoringTask;
+    private ScheduledFuture<?> trafficSimulationTask;
+    private ScheduledFuture<?> binSimulationTask;
+    private StreamObserver<NoiseData> noiseStreamObserver;
+
+    // Main UI components
+    private TabPane mainTabPane;
+    private Label statusLabel;
+    private ProgressBar connectionProgress;
+
+    // Dashboard tab components
+    private VBox dashboardContent;
+    private Label trafficStatusLabel;
+    private Label binStatusLabel;
+    private Label noiseStatusLabel;
+    private LineChart<Number, Number> trafficChart;
+
+    // Traffic tab components
     private TableView<TrafficEntry> trafficTable;
     private ComboBox<String> intersectionSelector;
     private ComboBox<String> lightColorSelector;
     private Label totalVehiclesLabel;
-    
-    // Bin tab
+
+    // Bin tab components
     private ComboBox<String> zoneSelector;
     private TextArea binStatusArea;
-    
-    // Noise tab
+    private ProgressBar[] binFillLevels;
+    private Label[] binLabels;
+
+    // Noise tab components
     private ComboBox<String> noiseZoneSelector;
     private Spinner<Double> dayLimitSpinner;
     private Spinner<Double> nightLimitSpinner;
     private TextArea noiseStatusArea;
-    
-    // System tab
+
+    // System tab components
     private ListView<String> servicesList;
     private TextArea systemLogArea;
-    
-    // Status bar
-    private Label statusLabel;
-    private Label registryStatusLabel;
-    private Label trafficStatusLabel;
-    private Label binStatusLabel;
-    private Label noiseStatusLabel;
 
-    // =========== Data collections ===========
-    private final ObservableList<TrafficEntry> trafficData = FXCollections.observableArrayList();
-    private final Map<String, TrafficEntry> intersectionMap = new HashMap<>();
-    private final IntegerProperty totalVehicles = new SimpleIntegerProperty(0);
+    // Data models
+    public static class TrafficEntry {
+        private final SimpleIntegerProperty vehicleCount = new SimpleIntegerProperty();
+        private final SimpleStringProperty timestamp = new SimpleStringProperty();
 
-    // =========== Background tasks and stream observers ===========
-    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(3);
-    private StreamObserver<NoiseData> noiseStreamObserver;
-    private Future<?> trafficSummaryTask;
-    private Future<?> noiseMonitoringTask;
+        public TrafficEntry(int vehicleCount, String timestamp) {
+            this.vehicleCount.set(vehicleCount);
+            this.timestamp.set(timestamp);
+        }
+
+        public int getVehicleCount() { return vehicleCount.get(); }
+        public String getTimestamp() { return timestamp.get(); }
+    }
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Smart City Dashboard");
-        
+        primaryStage.setTitle(APP_TITLE);
+
         // Build the UI
         BorderPane root = new BorderPane();
         root.setCenter(createMainContent());
         root.setBottom(createStatusBar());
         root.setPadding(new Insets(10));
-        
-        Scene scene = new Scene(root, 1024, 768);
+
+        Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
         primaryStage.setScene(scene);
-        
+
         // Set up listeners for service connection states
         setupConnectionListeners();
-        
+
+        // Start simulations immediately to show data
+        logMessage("Starting simulations immediately");
+        startSimulatedTrafficData();
+        startSimulatedBinData();
+        startSimulatedNoiseData();
+
         // Connect to services
         connectToServices().thenRun(() -> {
             if (registryConnected.get()) {
+                // Register services in case they're not already registered
+                registerServices();
+
+                // Start monitoring services
                 startMonitoringServices();
             }
         });
-        
+
         primaryStage.show();
-        
+
         // Add window close handler
         primaryStage.setOnCloseRequest(e -> stop());
     }
 
-    // =========== UI Creation Methods ===========
-    
-    private TabPane createMainContent() {
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        
-        tabPane.getTabs().addAll(
-            createTrafficTab(),
-            createBinTab(),
-            createNoiseTab(),
-            createSystemTab()
-        );
-        
-        return tabPane;
+    @Override
+    public void stop() {
+        logger.info("Shutting down application");
+        shouldStop.set(true);
+
+        // Cancel scheduled tasks
+        if (noiseMonitoringTask != null) {
+            noiseMonitoringTask.cancel(true);
+        }
+
+        if (trafficSimulationTask != null) {
+            trafficSimulationTask.cancel(true);
+        }
+
+        if (binSimulationTask != null) {
+            binSimulationTask.cancel(true);
+        }
+
+        // Shutdown executor
+        executor.shutdownNow();
+
+        // Close gRPC channels
+        closeChannels();
+
+        logMessage("Application shutdown completed");
+        Platform.exit();
     }
-    
-    private Tab createTrafficTab() {
-        Tab tab = new Tab("Traffic Management");
-        
-        // Traffic table for displaying intersections
-        trafficTable = new TableView<>();
-        setupTrafficTable();
-        VBox.setVgrow(trafficTable, Priority.ALWAYS);
-        
-        // Controls for changing traffic lights
-        VBox controls = new VBox(10);
-        controls.setPadding(new Insets(10));
-        
+
+    private void closeChannels() {
+        try {
+            if (registryChannel != null) {
+                registryChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+            }
+            if (trafficChannel != null) {
+                trafficChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+            }
+            if (binChannel != null) {
+                binChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+            }
+            if (noiseChannel != null) {
+                noiseChannel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            logger.error("Error shutting down channels", e);
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    /**
+     * Creates the main content area with tabs for different services
+     */
+    private TabPane createMainContent() {
+        mainTabPane = new TabPane();
+        mainTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        // Create tabs
+        Tab dashboardTab = new Tab("Dashboard", createDashboardTab());
+        Tab trafficTab = new Tab("Traffic Management", createTrafficTab());
+        Tab binTab = new Tab("Waste Management", createBinTab());
+        Tab noiseTab = new Tab("Noise Monitoring", createNoiseTab());
+        Tab systemTab = new Tab("System", createSystemTab());
+
+        mainTabPane.getTabs().addAll(dashboardTab, trafficTab, binTab, noiseTab, systemTab);
+        return mainTabPane;
+    }
+
+    /**
+     * Creates the dashboard overview tab
+     */
+    private VBox createDashboardTab() {
+        dashboardContent = new VBox(10);
+        dashboardContent.setPadding(new Insets(20));
+
+        // Header
+        Label headerLabel = new Label("Smart City Overview");
+        headerLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
+
+        // Service status indicators
+        HBox statusBox = new HBox(20);
+        statusBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox trafficStatus = createStatusIndicator("Traffic Management", trafficConnected);
+        trafficStatusLabel = (Label) trafficStatus.getChildren().get(1);
+
+        VBox binStatus = createStatusIndicator("Waste Management", binConnected);
+        binStatusLabel = (Label) binStatus.getChildren().get(1);
+
+        VBox noiseStatus = createStatusIndicator("Noise Monitoring", noiseConnected);
+        noiseStatusLabel = (Label) noiseStatus.getChildren().get(1);
+
+        statusBox.getChildren().addAll(trafficStatus, binStatus, noiseStatus);
+
+        // Traffic chart
+        NumberAxis xAxis = new NumberAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Time");
+        yAxis.setLabel("Vehicle Count");
+
+        trafficChart = new LineChart<>(xAxis, yAxis);
+        trafficChart.setTitle("Live Traffic Data");
+        trafficChart.setAnimated(false);
+        trafficChart.setCreateSymbols(false);
+
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+        series.setName("Vehicles");
+        trafficChart.getData().add(series);
+
+        // Add components to dashboard
+        dashboardContent.getChildren().addAll(
+            headerLabel,
+            new Separator(),
+            statusBox,
+            new Label("Live Traffic Monitoring"),
+            trafficChart
+        );
+
+        return dashboardContent;
+    }
+
+    /**
+     * Creates a status indicator for a service
+     */
+    private VBox createStatusIndicator(String serviceName, BooleanProperty connectedProperty) {
+        VBox box = new VBox(5);
+        box.setAlignment(Pos.CENTER);
+        box.setPrefWidth(200);
+        box.setPadding(new Insets(10));
+        box.setStyle("-fx-border-color: #cccccc; -fx-border-radius: 5;");
+
+        Label nameLabel = new Label(serviceName);
+        nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+
+        Label statusLabel = new Label("Disconnected");
+        statusLabel.setTextFill(Color.RED);
+
+        // Update status label when connection state changes
+        connectedProperty.addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(() -> {
+                if (newVal) {
+                    statusLabel.setText("Connected");
+                    statusLabel.setTextFill(Color.GREEN);
+                } else {
+                    statusLabel.setText("Disconnected");
+                    statusLabel.setTextFill(Color.RED);
+                }
+            });
+        });
+
+        box.getChildren().addAll(nameLabel, statusLabel);
+        return box;
+    }
+
+    /**
+     * Creates the traffic management tab
+     */
+    private VBox createTrafficTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+
+        // Header
+        Label headerLabel = new Label("Traffic Light Management");
+        headerLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
+
+        // Controls section
+        TitledPane controlsPane = new TitledPane();
+        controlsPane.setText("Traffic Light Controls");
+        controlsPane.setCollapsible(false);
+
+        GridPane controlsGrid = new GridPane();
+        controlsGrid.setHgap(10);
+        controlsGrid.setVgap(10);
+        controlsGrid.setPadding(new Insets(10));
+
+        // Intersection selector
+        Label intersectionLabel = new Label("Intersection:");
         intersectionSelector = new ComboBox<>();
-        
+        intersectionSelector.getItems().addAll("Main-First", "Main-Second", "Broadway-Park", "Fifth-Central");
+        intersectionSelector.setValue("Main-First");
+        intersectionSelector.setMaxWidth(Double.MAX_VALUE);
+
+        // Light color selector
+        Label colorLabel = new Label("Light Color:");
         lightColorSelector = new ComboBox<>();
         lightColorSelector.getItems().addAll("RED", "YELLOW", "GREEN");
-        
+        lightColorSelector.setValue("RED");
+        lightColorSelector.setMaxWidth(Double.MAX_VALUE);
+
+        // Set light button
         Button setLightButton = new Button("Set Light");
-        setLightButton.setOnAction(e -> {
-            String intersection = intersectionSelector.getValue();
-            String color = lightColorSelector.getValue();
-            if (intersection != null && color != null) {
-                logMessage("Sending command to set " + intersection + " traffic light to " + color);
-                setTrafficLight(intersection, color);
-            } else {
-                logMessage("Please select both intersection and light color");
-            }
-        });
-        
-        // Add listener to handle intersection selection changes
-        // Add listener to handle intersection selection changes
-        intersectionSelector.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            // First, update selection state in the data model
-            if (oldVal != null) {
-                // Deselect the old intersection in our model
-                TrafficEntry oldEntry = intersectionMap.get(oldVal);
-                if (oldEntry != null) {
-                    oldEntry.setSelected(false, "UI selection changed");
-                }
-            }
-            
-            if (newVal != null) {
-                // Select the new intersection in our model
-                logMessage("Selected intersection: " + newVal);
-                
-                TrafficEntry newEntry = intersectionMap.get(newVal);
-                if (newEntry != null) {
-                    // Update the model with a reason for the change
-                    newEntry.setSelected(true, "User selected in UI");
-                    // Update light color selector to match current state
-                    String currentColor = newEntry.getLightColor();
-                    if (currentColor != null && !currentColor.isEmpty()) {
-                        lightColorSelector.setValue(currentColor);
-                        logMessage("Current light status: " + currentColor);
-                    }
-                    
-                    // Log current traffic status
-                    logMessage("Current traffic at " + newVal + ": " + 
-                              newEntry.getWaitingVehicles() + " vehicles waiting");
-                } else {
-                    // This is unusual - we have a selection for which we don't have data
-                    logger.warn("Selected intersection '{}' has no data in the model", newVal);
-                    logMessage("Warning: No data available for " + newVal);
-                }
-            }
-        });
-        
+        setLightButton.setMaxWidth(Double.MAX_VALUE);
+        setLightButton.setOnAction(e -> setTrafficLight(
+            intersectionSelector.getValue(),
+            lightColorSelector.getValue()
+        ));
+
+        // Add controls to grid
+        controlsGrid.add(intersectionLabel, 0, 0);
+        controlsGrid.add(intersectionSelector, 1, 0);
+        controlsGrid.add(colorLabel, 0, 1);
+        controlsGrid.add(lightColorSelector, 1, 1);
+        controlsGrid.add(setLightButton, 1, 2);
+
+        // Set column constraints
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(30);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(70);
+        controlsGrid.getColumnConstraints().addAll(col1, col2);
+
+        controlsPane.setContent(controlsGrid);
+
+        // Traffic data section
+        TitledPane dataPane = new TitledPane();
+        dataPane.setText("Traffic Data");
+        dataPane.setCollapsible(false);
+
+        VBox dataBox = new VBox(10);
+        dataBox.setPadding(new Insets(10));
+
+        // Total vehicles label
         totalVehiclesLabel = new Label("Total Vehicles: 0");
-        totalVehiclesLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
-        // Bind total vehicles property to label
-        totalVehicles.addListener((obs, oldVal, newVal) -> 
-            Platform.runLater(() -> totalVehiclesLabel.setText("Total Vehicles: " + newVal))
-        );
-        
-        controls.getChildren().addAll(
-            new Label("Intersection:"),
-            intersectionSelector,
-            new Label("Light Color:"),
-            lightColorSelector,
-            setLightButton,
+        totalVehiclesLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+
+        // Traffic table
+        trafficTable = new TableView<>();
+        trafficTable.setPlaceholder(new Label("No traffic data available"));
+
+        TableColumn<TrafficEntry, Number> vehicleCol = new TableColumn<>("Vehicle Count");
+        vehicleCol.setCellValueFactory(cellData -> cellData.getValue().vehicleCount);
+        vehicleCol.setPrefWidth(150);
+
+        TableColumn<TrafficEntry, String> timeCol = new TableColumn<>("Timestamp");
+        timeCol.setCellValueFactory(cellData -> cellData.getValue().timestamp);
+        timeCol.setPrefWidth(250);
+
+        trafficTable.getColumns().addAll(vehicleCol, timeCol);
+        trafficTable.setMaxHeight(300);
+
+        dataBox.getChildren().addAll(totalVehiclesLabel, trafficTable);
+        dataPane.setContent(dataBox);
+
+        // Add all components to tab
+        content.getChildren().addAll(
+            headerLabel,
             new Separator(),
-            totalVehiclesLabel
+            controlsPane,
+            dataPane
         );
-        
-        // Layout
-        SplitPane splitPane = new SplitPane();
-        splitPane.getItems().addAll(new VBox(trafficTable), controls);
-        splitPane.setDividerPositions(0.7);
-        
-        tab.setContent(splitPane);
-        return tab;
+
+        return content;
     }
-    
-    private void setupTrafficTable() {
-        TableColumn<TrafficEntry, String> idCol = new TableColumn<>("Intersection");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("intersectionId"));
-        
-        TableColumn<TrafficEntry, String> colorCol = new TableColumn<>("Light Color");
-        colorCol.setCellValueFactory(new PropertyValueFactory<>("lightColor"));
-        colorCol.setCellFactory(column -> new TableCell<TrafficEntry, String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item);
-                    switch (item.toUpperCase()) {
-                        case "RED" -> setStyle("-fx-background-color: #ffcccc;");
-                        case "GREEN" -> setStyle("-fx-background-color: #ccffcc;");
-                        case "YELLOW" -> setStyle("-fx-background-color: #ffffcc;");
-                        default -> setStyle("");
-                    }
-                }
-            }
-        });
-        
-        TableColumn<TrafficEntry, Number> vehiclesCol = new TableColumn<>("Waiting Vehicles");
-        vehiclesCol.setCellValueFactory(new PropertyValueFactory<>("waitingVehicles"));
-        
-        trafficTable.getColumns().addAll(idCol, colorCol, vehiclesCol);
-        trafficTable.setItems(trafficData);
-    }
-    
-    private Tab createBinTab() {
-        Tab tab = new Tab("Waste Management");
-        
-        // Bin status area
+
+    /**
+     * Creates the waste management tab
+     */
+    private VBox createBinTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+
+        // Header
+        Label headerLabel = new Label("Waste Bin Management");
+        headerLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
+
+        // Zone selection
+        HBox zoneBox = new HBox(10);
+        zoneBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label zoneLabel = new Label("Select Zone:");
+        zoneSelector = new ComboBox<>();
+        zoneSelector.getItems().addAll("Zone-1", "Zone-2", "Zone-3", "Zone-4");
+        zoneSelector.setValue("Zone-1");
+
+        Button getRouteButton = new Button("Get Collection Route");
+        getRouteButton.setOnAction(e -> getCollectionRoute(zoneSelector.getValue()));
+
+        zoneBox.getChildren().addAll(zoneLabel, zoneSelector, getRouteButton);
+
+        // Bin status visualization
+        TitledPane binStatusPane = new TitledPane();
+        binStatusPane.setText("Bin Fill Levels");
+        binStatusPane.setCollapsible(false);
+
+        GridPane binGrid = new GridPane();
+        binGrid.setHgap(15);
+        binGrid.setVgap(15);
+        binGrid.setPadding(new Insets(15));
+
+        // Create bin fill level indicators
+        binFillLevels = new ProgressBar[4];
+        binLabels = new Label[4];
+
+        for (int i = 0; i < 4; i++) {
+            String binId = "Bin-" + (i + 1);
+
+            Label binLabel = new Label(binId + ": 0%");
+            ProgressBar fillLevel = new ProgressBar(0);
+            fillLevel.setPrefWidth(200);
+
+            binLabels[i] = binLabel;
+            binFillLevels[i] = fillLevel;
+
+            binGrid.add(binLabel, 0, i);
+            binGrid.add(fillLevel, 1, i);
+        }
+
+        binStatusPane.setContent(binGrid);
+
+        // Status area
+        TitledPane alertsPane = new TitledPane();
+        alertsPane.setText("Collection Alerts");
+        alertsPane.setCollapsible(false);
+
         binStatusArea = new TextArea();
         binStatusArea.setEditable(false);
-        binStatusArea.setWrapText(true);
-        VBox.setVgrow(binStatusArea, Priority.ALWAYS);
-        
-        // Bin controls
-        VBox controls = new VBox(10);
-        controls.setPadding(new Insets(10));
-        
-        zoneSelector = new ComboBox<>();
-        zoneSelector.getItems().addAll("Zone-A", "Zone-B", "Zone-C");
-        
-        Button getRouteButton = new Button("Get Collection Route");
-        getRouteButton.setOnAction(e -> {
-            String zone = zoneSelector.getValue();
-            if (zone != null) {
-                getCollectionRoute(zone);
-            } else {
-                logMessage("Please select a zone first");
-            }
-        });
-        
-        Button urgentCollectionsButton = new Button("Show Urgent Collections");
-        urgentCollectionsButton.setOnAction(e -> getUrgentCollections());
-        
-        controls.getChildren().addAll(
-            new Label("Select Zone:"),
-            zoneSelector,
-            getRouteButton,
-            urgentCollectionsButton
+        binStatusArea.setPrefHeight(150);
+
+        alertsPane.setContent(binStatusArea);
+
+        // Add all components to tab
+        content.getChildren().addAll(
+            headerLabel,
+            new Separator(),
+            zoneBox,
+            binStatusPane,
+            alertsPane
         );
-        
-        // Layout
-        SplitPane splitPane = new SplitPane();
-        splitPane.getItems().addAll(new VBox(binStatusArea), controls);
-        splitPane.setDividerPositions(0.7);
-        
-        tab.setContent(splitPane);
-        return tab;
+
+        return content;
     }
-    
-    private Tab createNoiseTab() {
-        Tab tab = new Tab("Noise Monitoring");
-        
-        // Noise status area
-        noiseStatusArea = new TextArea();
-        noiseStatusArea.setEditable(false);
-        noiseStatusArea.setWrapText(true);
-        VBox.setVgrow(noiseStatusArea, Priority.ALWAYS);
-        
-        // Noise controls
-        VBox controls = new VBox(10);
-        controls.setPadding(new Insets(10));
-        
+
+    /**
+     * Creates the noise monitoring tab
+     */
+    private VBox createNoiseTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+
+        // Header
+        Label headerLabel = new Label("Noise Level Monitoring");
+        headerLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
+
+        // Threshold controls
+        TitledPane thresholdPane = new TitledPane();
+        thresholdPane.setText("Noise Thresholds");
+        thresholdPane.setCollapsible(false);
+
+        GridPane thresholdGrid = new GridPane();
+        thresholdGrid.setHgap(10);
+        thresholdGrid.setVgap(10);
+        thresholdGrid.setPadding(new Insets(10));
+
+        // Zone selector
+        Label zoneLabel = new Label("Zone:");
         noiseZoneSelector = new ComboBox<>();
         noiseZoneSelector.getItems().addAll("Zone-1", "Zone-2", "Zone-3");
-        
-        dayLimitSpinner = new Spinner<>(40.0, 90.0, 70.0, 0.5);
+        noiseZoneSelector.setValue("Zone-1");
+
+        // Day limit spinner
+        Label dayLabel = new Label("Day Limit (dB):");
+        SpinnerValueFactory.DoubleSpinnerValueFactory dayFactory =
+            new SpinnerValueFactory.DoubleSpinnerValueFactory(40, 90, 70, 1);
+        dayLimitSpinner = new Spinner<>(dayFactory);
         dayLimitSpinner.setEditable(true);
-        
-        nightLimitSpinner = new Spinner<>(30.0, 80.0, 55.0, 0.5);
+        dayLimitSpinner.setPrefWidth(100);
+
+        // Night limit spinner
+        Label nightLabel = new Label("Night Limit (dB):");
+        SpinnerValueFactory.DoubleSpinnerValueFactory nightFactory =
+            new SpinnerValueFactory.DoubleSpinnerValueFactory(30, 80, 55, 1);
+        nightLimitSpinner = new Spinner<>(nightFactory);
         nightLimitSpinner.setEditable(true);
-        
+        nightLimitSpinner.setPrefWidth(100);
+
+        // Set threshold button
         Button setThresholdButton = new Button("Set Thresholds");
-        setThresholdButton.setOnAction(e -> {
-            String zone = noiseZoneSelector.getValue();
-            if (zone != null) {
-                setNoiseThresholds(
-                    zone,
-                    dayLimitSpinner.getValue(),
-                    nightLimitSpinner.getValue()
-                );
-            } else {
-                logMessage("Please select a zone first");
-            }
-        });
-        
-        controls.getChildren().addAll(
-            new Label("Select Zone:"),
-            noiseZoneSelector,
-            new Label("Day Limit (dB):"),
-            dayLimitSpinner,
-            new Label("Night Limit (dB):"),
-            nightLimitSpinner,
-            setThresholdButton
+        setThresholdButton.setOnAction(e -> setNoiseThresholds(
+            noiseZoneSelector.getValue(),
+            dayLimitSpinner.getValue(),
+            nightLimitSpinner.getValue()
+        ));
+
+        // Add controls to grid
+        thresholdGrid.add(zoneLabel, 0, 0);
+        thresholdGrid.add(noiseZoneSelector, 1, 0);
+        thresholdGrid.add(dayLabel, 0, 1);
+        thresholdGrid.add(dayLimitSpinner, 1, 1);
+        thresholdGrid.add(nightLabel, 0, 2);
+        thresholdGrid.add(nightLimitSpinner, 1, 2);
+        thresholdGrid.add(setThresholdButton, 1, 3);
+
+        thresholdPane.setContent(thresholdGrid);
+
+        // Noise alerts area
+        TitledPane alertsPane = new TitledPane();
+        alertsPane.setText("Noise Alerts");
+        alertsPane.setCollapsible(false);
+
+        noiseStatusArea = new TextArea();
+        noiseStatusArea.setEditable(false);
+        noiseStatusArea.setPrefHeight(200);
+
+        alertsPane.setContent(noiseStatusArea);
+
+        // Add all components to tab
+        content.getChildren().addAll(
+            headerLabel,
+            new Separator(),
+            thresholdPane,
+            alertsPane
         );
-        
-        // Layout
-        SplitPane splitPane = new SplitPane();
-        splitPane.getItems().addAll(new VBox(noiseStatusArea), controls);
-        splitPane.setDividerPositions(0.7);
-        
-        tab.setContent(splitPane);
-        return tab;
+
+        return content;
     }
-    
-    private Tab createSystemTab() {
-        Tab tab = new Tab("System Status");
-        
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(10));
-        
-        Label servicesLabel = new Label("Active Services");
-        servicesLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        
+
+    /**
+     * Creates the system tab
+     */
+    private VBox createSystemTab() {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+
+        // Header
+        Label headerLabel = new Label("System Information");
+        headerLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
+
+        // Services list
+        TitledPane servicesPane = new TitledPane();
+        servicesPane.setText("Discovered Services");
+        servicesPane.setCollapsible(false);
+
         servicesList = new ListView<>();
-        VBox.setVgrow(servicesList, Priority.ALWAYS);
-        
-        Button refreshButton = new Button("Refresh Services");
-        refreshButton.setOnAction(e -> refreshServices());
-        
-        Label logLabel = new Label("System Log");
-        logLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        
+        servicesList.setPrefHeight(150);
+
+        servicesPane.setContent(servicesList);
+
+        // System log
+        TitledPane logPane = new TitledPane();
+        logPane.setText("System Log");
+        logPane.setCollapsible(false);
+
         systemLogArea = new TextArea();
         systemLogArea.setEditable(false);
-        systemLogArea.setWrapText(true);
-        VBox.setVgrow(systemLogArea, Priority.ALWAYS);
-        
+        systemLogArea.setPrefHeight(300);
+
+        logPane.setContent(systemLogArea);
+
+        // Control buttons
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER_LEFT);
+
+        Button refreshButton = new Button("Refresh Services");
+        refreshButton.setOnAction(e -> refreshServices());
+
+        Button clearLogButton = new Button("Clear Log");
+        clearLogButton.setOnAction(e -> systemLogArea.clear());
+
+        buttonBox.getChildren().addAll(refreshButton, clearLogButton);
+
+        // Add all components to tab
         content.getChildren().addAll(
-            servicesLabel,
-            servicesList,
-            refreshButton,
+            headerLabel,
             new Separator(),
-            logLabel,
-            systemLogArea
+            buttonBox,
+            servicesPane,
+            logPane
         );
-        
-        tab.setContent(content);
-        return tab;
+
+        return content;
     }
-    
+
+    /**
+     * Creates the status bar at the bottom of the window
+     */
     private HBox createStatusBar() {
         HBox statusBar = new HBox(10);
-        statusBar.setPadding(new Insets(5));
-        statusBar.setStyle("-fx-background-color: #f0f0f0; -fx-border-width: 1 0 0 0; -fx-border-color: #cccccc;");
+        statusBar.setPadding(new Insets(5, 10, 5, 10));
+        statusBar.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-width: 1 0 0 0;");
 
-        // Create service status labels
-        registryStatusLabel = new Label("Registry Service: Disconnected");
-        trafficStatusLabel = new Label("Traffic Service: Disconnected");
-        binStatusLabel = new Label("Bin Service: Disconnected");
-        noiseStatusLabel = new Label("Noise Service: Disconnected");
-
-        // Set initial colors
-        registryStatusLabel.setTextFill(Color.RED);
-        trafficStatusLabel.setTextFill(Color.RED);
-        binStatusLabel.setTextFill(Color.RED);
-        noiseStatusLabel.setTextFill(Color.RED);
-
-        // Add separators between status labels
-        Separator sep1 = new Separator(Orientation.VERTICAL);
-        Separator sep2 = new Separator(Orientation.VERTICAL);
-        Separator sep3 = new Separator(Orientation.VERTICAL);
-
-        // General status message area
         statusLabel = new Label("Initializing...");
-        statusLabel.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(statusLabel, Priority.ALWAYS);
+        connectionProgress = new ProgressBar(0);
+        connectionProgress.setPrefWidth(150);
+        connectionProgress.setVisible(false);
 
-        // Add all components to status bar
-        statusBar.getChildren().addAll(
-            statusLabel,
-            new Separator(Orientation.VERTICAL),
-            registryStatusLabel,
-            sep1,
-            trafficStatusLabel,
-            sep2,
-            binStatusLabel,
-            sep3,
-            noiseStatusLabel
-        );
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        Label versionLabel = new Label("Smart City v1.0");
+        versionLabel.setStyle("-fx-text-fill: #888888;");
+
+        statusBar.getChildren().addAll(statusLabel, connectionProgress, spacer, versionLabel);
         return statusBar;
     }
 
-    private void updateStatusLabel(Label label, String serviceName, boolean connected) {
-        Platform.runLater(() -> {
-            label.setText(serviceName + ": " + (connected ? "Connected" : "Disconnected"));
-            label.setTextFill(connected ? Color.GREEN : Color.RED);
-        });
-    }
-
-    private void updateStatus(String message) {
-        Platform.runLater(() -> statusLabel.setText(message));
-    }
-    
-    private void logMessage(String message) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-        Platform.runLater(() -> {
-            systemLogArea.appendText("[" + timestamp + "] " + message + "\n");
-            updateStatus(message);
-        });
-        logger.info(message);
-    }
-    
-    // Method to handle getting urgent bin collections
     /**
-     * Get and display urgent bin collections.
-     * This method enhances the handling of urgent bin collections by clearly
-     * differentiating urgent vs. non-urgent collections and providing better visualization.
+     * Set up listeners for service connection states
      */
-    private void getUrgentCollections() {
-        if (binStub == null || !binConnected.get()) {
-            logMessage("Not connected to Bin service - cannot check urgent collections");
-            binStatusArea.setText("Error: Not connected to bin service");
-            return;
-        }
-
-        binStatusArea.clear();
-        binStatusArea.setText("Checking collections status...\n");
-        
-        binStub.getUrgentCollections(Empty.newBuilder().build(),
-            new StreamObserver<BinAlert>() {
-                private final StringBuilder urgentAlerts = new StringBuilder("URGENT COLLECTIONS:\n");
-                private final StringBuilder regularAlerts = new StringBuilder("\nREGULAR COLLECTIONS:\n");
-                private int urgentCount = 0;
-                private int regularCount = 0;
-                private static final int URGENT_THRESHOLD = 85; // Consider bins over 85% as urgent
-
-                @Override
-                public void onNext(BinAlert alert) {
-                    // Determine if collection is urgent based on server flag and fill percent
-                    boolean isUrgent = alert.getUrgentCollection() || alert.getFillPercent() >= URGENT_THRESHOLD;
-                    
-                    if (isUrgent) {
-                        urgentCount++;
-                        urgentAlerts.append(String.format("%d. Bin %s: %d%% full ⚠️ URGENT\n",
-                            urgentCount,
-                            alert.getBinId(),
-                            alert.getFillPercent()));
-                            
-                        logMessage("URGENT: Bin " + alert.getBinId() + " requires immediate collection! (" + 
-                                  alert.getFillPercent() + "% full)");
-                    } else {
-                        regularCount++;
-                        regularAlerts.append(String.format("%d. Bin %s: %d%% full\n",
-                            regularCount,
-                            alert.getBinId(),
-                            alert.getFillPercent()));
-                    }
-                    
-                    Platform.runLater(() -> {
-                        StringBuilder fullDisplay = new StringBuilder();
-                        
-                        // Add summary header
-                        fullDisplay.append("COLLECTION STATUS SUMMARY:\n");
-                        fullDisplay.append("--------------------------------\n");
-                        
-                        // Only display urgent section if there are urgent collections
-                        if (urgentCount > 0) {
-                            fullDisplay.append(urgentAlerts);
-                            fullDisplay.append("\n");
-                        }
-                        
-                        // Only display regular section if there are regular collections
-                        if (regularCount > 0) {
-                            fullDisplay.append(regularAlerts);
-                        } else if (urgentCount == 0) {
-                            fullDisplay.append("No collections needed at this time.\n");
-                        }
-                        
-                        binStatusArea.setText(fullDisplay.toString());
-                    });
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                    logger.error("Error checking bin collections", t);
-                    Platform.runLater(() -> {
-                        String error = "Error checking collections: " + t.getMessage();
-                        binStatusArea.setText("ERROR: " + error);
-                        logMessage(error);
-                    });
-                }
-
-                @Override
-                public void onCompleted() {
-                    Platform.runLater(() -> {
-                        if (urgentCount == 0 && regularCount == 0) {
-                            binStatusArea.setText("No collections needed at this time.");
-                        }
-                        
-                        // Log summary
-                        String summary = String.format(
-                            "Completed collections check. Found %d urgent and %d regular collections.",
-                            urgentCount, regularCount);
-                        logMessage(summary);
-                        
-                        // Add summary to bottom of display
-                        binStatusArea.appendText("\n\n" + summary);
-                    });
-                }
-            });
-    }
-
-    // Method to get the collection route for a specific zone
-    private void getCollectionRoute(String zone) {
-        if (binStub == null || !binConnected.get()) {
-            logMessage("Not connected to Bin service - cannot get collection route");
-            binStatusArea.setText("Error: Not connected to bin service");
-            return;
-        }
-
-        if (zone == null || zone.isEmpty()) {
-            logMessage("Please select a zone first");
-            return;
-        }
-
-        Zone request = Zone.newBuilder()
-            .setAreaId(zone)
-            .build();
-        
-        binStub.getRoute(request, new StreamObserver<Route>() {
-            @Override
-            public void onNext(Route route) {
-                Platform.runLater(() -> {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Collection Route for ").append(zone).append(":\n");
-                    
-                    if (route.getBinsList().isEmpty()) {
-                        sb.append("No bins to collect in this zone.");
-                    } else {
-                        for (int i = 0; i < route.getBinsList().size(); i++) {
-                            sb.append(i+1).append(". ").append(route.getBins(i)).append("\n");
-                        }
-                    }
-                    
-                    binStatusArea.setText(sb.toString());
-                    logMessage("Retrieved collection route for zone " + zone);
-                });
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                logMessage("Error getting route for zone " + zone + ": " + t.getMessage());
-                Platform.runLater(() -> 
-                    binStatusArea.setText("Error getting collection route: " + t.getMessage()));
-            }
-
-            @Override
-            public void onCompleted() {
-                // Route retrieval completed
-            }
-        });
-    }
-
-    /**
-     * Set traffic light color for an intersection.
-     * This method handles validation and ensures proper synchronization with the UI.
-     */
-    private void setTrafficLight(String intersection, String color) {
-        if (trafficStub == null || !trafficConnected.get()) {
-            logMessage("Not connected to Traffic service - cannot set light");
-            return;
-        }
-        
-        // Validate intersection ID
-        if (intersection == null || intersection.isEmpty()) {
-            logMessage("Error: Invalid intersection ID");
-            return;
-        }
-
-        // Validate intersection exists in selector
-        if (!intersectionSelector.getItems().contains(intersection)) {
-            logMessage("Error: Intersection '" + intersection + "' is not in the selection list");
-            return;
-        }
-        
-        // Validate current selection state
-        String currentSelection = intersectionSelector.getValue();
-        if (currentSelection == null || !currentSelection.equals(intersection)) {
-            logger.warn("Setting traffic light for non-selected intersection: {}", intersection);
-            logMessage("Note: Setting traffic light for intersection that is not currently selected");
-            
-            // Option: Auto-select this intersection to match action
-            // intersectionSelector.setValue(intersection);
-        }
-
-        // Check if the intersection exists in our data
-        TrafficEntry existingEntry = intersectionMap.get(intersection);
-        if (existingEntry == null) {
-            logMessage("Warning: Attempting to set light for unknown intersection: " + intersection);
-            // Create a placeholder entry for this intersection
-            logger.info("Creating new traffic entry for intersection: {}", intersection);
-            existingEntry = new TrafficEntry(intersection, color, 0);
-            
-            // Set selection state matching the current UI selection
-            boolean isSelected = intersection.equals(intersectionSelector.getValue());
-            existingEntry.setSelected(isSelected, "Newly created entry for setTrafficLight");
-            
-            // Add to data structures
-            intersectionMap.put(intersection, existingEntry);
-            trafficData.add(existingEntry);
-            
-            logMessage("Created new traffic entry for " + intersection);
-        } else {
-            logMessage("Current status of " + intersection + ": Light=" + 
-                      existingEntry.getLightColor() + ", Vehicles=" + 
-                      existingEntry.getWaitingVehicles());
-        }
-
-        // Validate traffic light color
-        if (color == null || !color.matches("(?i)RED|YELLOW|GREEN")) {
-            logMessage("Error: Invalid traffic light color: " + color);
-            return;
-        }
-        
-        logMessage("Sending command to change " + intersection + " traffic light to " + color);
-        
-        LightCommand command = LightCommand.newBuilder()
-            .setIntersection(intersection)
-            .setColor(color)
-            .build();
-
-        trafficStub.setLight(command, new StreamObserver<Response>() {
-            @Override
-            public void onNext(Response response) {
-                Platform.runLater(() -> {
-                    logMessage("Traffic light updated successfully: " + response.getStatus());
-                    
-                    // Update the traffic entry if it exists
-                    TrafficEntry entry = intersectionMap.get(intersection);
-                    if (entry != null) {
-                        // Update properties
-                        entry.setLightColor(color);
-                        
-                        // Ensure selection state is correct
-                        boolean shouldBeSelected = intersection.equals(intersectionSelector.getValue());
-                        if (entry.isSelected() != shouldBeSelected) {
-                            entry.setSelected(shouldBeSelected, "Updated during traffic light change");
-                        }
-                        
-                        logMessage("Updated local state for " + intersection + " to " + color);
-                    } else {
-                        // Create a new entry if it doesn't exist yet
-                        TrafficEntry newEntry = new TrafficEntry(intersection, color, 0);
-                        
-                        // Set selection state
-                        boolean isSelected = intersection.equals(intersectionSelector.getValue());
-                        newEntry.setSelected(isSelected, "New entry created in traffic light response");
-                        
-                        // Add to data structures
-                        intersectionMap.put(intersection, newEntry);
-                        trafficData.add(newEntry);
-                        logMessage("Created new traffic entry for " + intersection + " with " + color + " light");
-                    }
-                });
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                Platform.runLater(() -> {
-                    String errorMsg = "Error setting traffic light: " + t.getMessage();
-                    logMessage(errorMsg);
-                    logger.error("Failed to set traffic light for {}: {}", intersection, t.getMessage(), t);
-                });
-            }
-
-            @Override
-            public void onCompleted() {
-                // Light update completed
-            }
-        });
-    }
-
-    private void setNoiseThresholds(String zone, double dayLimit, double nightLimit) {
-        if (noiseChannel == null || zone == null) {
-            updateStatusArea(noiseStatusArea, "Error: Not connected to noise service or invalid zone");
-            return;
-        }
-
-        NoiseGrpc.NoiseBlockingStub stub = NoiseGrpc.newBlockingStub(noiseChannel);
-        try {
-            Response response = stub.setZoneThreshold(NoiseThreshold.newBuilder()
-                .setZoneId(zone)
-                .setDayLimit((float) dayLimit)
-                .setNightLimit((float) nightLimit)
-                .build());
-            
-            updateStatusArea(noiseStatusArea, "Thresholds updated: " + response.getStatus());
-        } catch (Exception e) {
-            logger.error("Error setting noise thresholds", e);
-            updateStatusArea(noiseStatusArea, "Error: " + e.getMessage());
-        }
-    }
-
-    private void updateStatusArea(TextArea area, String message) {
-        Platform.runLater(() -> {
-            area.setText(message + "\n" + area.getText());
-            if (area.getText().length() > 5000) {
-                area.setText(area.getText().substring(0, 5000));
-            }
-        });
-    }
-
-    private void startTrafficDataStream() {
-        if (trafficStub == null || !trafficConnected.get()) {
-            logMessage("Cannot start traffic monitoring - service not connected");
-            return;
-        }
-        
-        logMessage("Initializing traffic data stream...");
-        StreamObserver<TrafficData> observer = new StreamObserver<TrafficData>() {
-            @Override
-            public void onNext(TrafficData data) {
-                // First validate data exists to prevent NPE
-                if (data == null) {
-                    logger.warn("Received null traffic data from stream");
-                    return;
-                }
-                
-                // Only log significant traffic events to reduce noise
-                if (data.getVehicleCount() > 10) {
-                    logMessage("Received traffic data: Intersection=" + data.getIntersectionId() + 
-                               ", Light=" + data.getLightColor() + 
-                               ", Vehicles=" + data.getVehicleCount());
-                } else {
-                    // Use debug level for routine updates
-                    logger.debug("Traffic update: {}={}, Light={}, Vehicles={}", 
-                               "Intersection", data.getIntersectionId(),
-                               data.getLightColor(), data.getVehicleCount());
-                }
-                
-                // Process the data directly without nested Platform.runLater
-                updateTrafficData(data);
-            }
-            @Override
-            public void onError(Throwable t) {
-                Platform.runLater(() -> {
-                    logMessage("Error in traffic data stream: " + t.getMessage());
-                    if (!shouldStop.get()) {
-                        // Attempt to reconnect after a delay
-                        executor.schedule(() -> {
-                            if (!shouldStop.get()) {
-                                logMessage("Attempting to reconnect to traffic stream...");
-                                startTrafficDataStream();
-                            }
-                        }, 5, TimeUnit.SECONDS);
-                    }
-                });
-            }
-
-            @Override
-            public void onCompleted() {
-                logMessage("Traffic data stream completed");
-            }
-        };
-        // Start the stream
-        try {
-            trafficStub.streamTraffic(Empty.newBuilder().build(), observer);
-            logMessage("Traffic data stream started successfully");
-        } catch (Exception e) {
-            logger.error("Failed to start traffic data stream", e);
-            logMessage("Error starting traffic data stream: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Process traffic data received from the service.
-     * This method validates the data and then updates the UI.
-     */
-    private void updateTrafficData(TrafficData data) {
-        // Full validation of all data fields
-        if (data == null) {
-            logger.warn("Received null traffic data");
-            return;
-        }
-        
-        String intersectionId = data.getIntersectionId();
-        String lightColor = data.getLightColor();
-        int vehicleCount = data.getVehicleCount();
-        
-        // Enhanced validation for all fields
-        if (intersectionId == null || intersectionId.isEmpty()) {
-            logger.warn("Received traffic data with invalid intersection ID");
-            return;
-        }
-        
-        if (lightColor == null || lightColor.isEmpty()) {
-            logger.warn("Received traffic data with invalid light color for intersection: {}", intersectionId);
-            return;
-        }
-        
-        if (vehicleCount < 0) {
-            logger.warn("Received traffic data with invalid vehicle count for intersection: {}", intersectionId);
-            return;
-        }
-        
-        // More detailed logging at different levels based on importance
-        if (vehicleCount > 20) {
-            logger.info("High traffic: Intersection={}, Light={}, Vehicles={}", 
-                      intersectionId, lightColor, vehicleCount);
-        } else {
-            logger.debug("Traffic update: Intersection={}, Light={}, Vehicles={}", 
-                        intersectionId, lightColor, vehicleCount);
-        }
-        
-        // Use a single runLater to ensure atomicity of the update
-        Platform.runLater(() -> {
-            try {
-                // Update the vehicle count more accurately
-                // Only increment by the count instead of adding to running total each time
-                // This prevents double-counting when the same data is processed multiple times
-                if (vehicleCount > 0) {
-                    totalVehicles.set(totalVehicles.get() + vehicleCount);
-                }
-                
-                // Update the UI with the validated data
-                updateTrafficUI(intersectionId, lightColor, vehicleCount);
-            } catch (Exception e) {
-                logger.error("Error processing traffic data: {} - {}",
-                           intersectionId, e.getMessage(), e);
-                logMessage("Error updating traffic display: " + e.getMessage());
-            }
-        });
-    }
-    
-    /**
-     * Update the traffic UI with data received from the service.
-     * This method handles both new and existing intersections.
-     */
-    /**
-     * Update the traffic UI with data received from the service.
-     * This method ensures proper synchronization between model and UI.
-     */
-    private void updateTrafficUI(String intersectionId, String lightColor, int vehicleCount) {
-        // Update total vehicles label
-        totalVehiclesLabel.setText("Total Vehicles: " + totalVehicles.get());
-        
-        // Get current selection state from UI
-        String selectedIntersection = intersectionSelector.getValue();
-        boolean isCurrentSelection = (selectedIntersection != null && 
-                                    selectedIntersection.equals(intersectionId));
-        
-        // Log the selection state for debugging
-        logger.debug("Processing update for intersection: {} (selected in UI: {})", 
-                   intersectionId, isCurrentSelection);
-        
-        // Get existing entry or prepare to create a new one
-        TrafficEntry entry = intersectionMap.get(intersectionId);
-        
-        // Track significant changes for logging
-        boolean isNewIntersection = (entry == null);
-        boolean lightChanged = false;
-        int oldVehicleCount = 0;
-        
-        if (entry == null) {
-            // Create a new entry for this intersection
-            entry = new TrafficEntry(intersectionId, lightColor, vehicleCount);
-            logger.info("Creating new traffic entry for intersection: {}", intersectionId);
-            
-            // Set selection state with reason
-            entry.setSelected(isCurrentSelection, "New intersection detected");
-            
-            // Add to data structures
-            intersectionMap.put(intersectionId, entry);
-            trafficData.add(entry);
-            
-            // Add to selector if not already present
-            if (!intersectionSelector.getItems().contains(intersectionId)) {
-                intersectionSelector.getItems().add(intersectionId);
-                logMessage("Added new intersection: " + intersectionId);
-                
-                // Debug log for intersection selector state
-                logger.debug("Intersection selector now has {} items", intersectionSelector.getItems().size());
-                
-                // If this is the first intersection, select it automatically
-                if (intersectionSelector.getItems().size() == 1) {
-                    logMessage("Auto-selecting first intersection: " + intersectionId);
-                    intersectionSelector.setValue(intersectionId);
-                    
-                    // Also update the light color selector
-                    lightColorSelector.setValue(lightColor);
-                    
-                    // Ensure the traffic entry is marked as selected with reason
-                    entry.setSelected(true, "Auto-selected as first intersection");
-                }
-                
-                // Alphabetically sort the intersections for better UX
-                FXCollections.sort(intersectionSelector.getItems());
-            }
-        } else {
-            // Track changes for existing entry
-            lightChanged = !entry.getLightColor().equals(lightColor);
-            oldVehicleCount = entry.getWaitingVehicles();
-            
-            // Log any significant changes for debugging
-            if (lightChanged) {
-                logger.debug("Traffic light changing for {}: {} -> {}", 
-                           intersectionId, entry.getLightColor(), lightColor);
-            }
-            
-            if (Math.abs(vehicleCount - oldVehicleCount) > 5) {
-                logger.debug("Vehicle count changing for {}: {} -> {}", 
-                           intersectionId, oldVehicleCount, vehicleCount);
-            }
-            
-            // Update the entry properties
-            entry.updateData(lightColor, vehicleCount);
-            
-            // Update UI if this is the currently selected intersection
-            if (isCurrentSelection) {
-                if (lightChanged) {
-                    logger.info("Updating selected intersection light color in UI: {}", lightColor);
-                    lightColorSelector.setValue(lightColor);
-                }
-                
-                // Fix any selection state mismatch
-                if (!entry.isSelected()) {
-                    logger.warn("Selection state mismatch detected for intersection: {}", intersectionId);
-                    entry.setSelected(true, "Fixed UI/model selection mismatch");
-                }
-            } else if (entry.isSelected()) {
-                // This entry is marked as selected in the model but not in the UI
-                logger.warn("Found incorrectly selected entry: {}. UI selection is: {}", 
-                          intersectionId, selectedIntersection);
-                
-                // If this entry shows selected but UI has a different selection,
-                // update the model to match the UI (UI is source of truth)
-                entry.setSelected(false, "Synchronized with UI selection");
-            }
-        }
-        
-        // Log significant changes
-        if (isNewIntersection) {
-            logger.info("New intersection detected: {}", intersectionId);
-        } else if (lightChanged) {
-            logMessage("Traffic light at " + intersectionId + " changed to " + lightColor);
-        }
-        
-        // Log significant traffic changes (but not for new intersections to avoid spam)
-        if (!isNewIntersection && Math.abs(vehicleCount - oldVehicleCount) > 10) {
-            logMessage("Significant traffic change at " + intersectionId + 
-                      ": from " + oldVehicleCount + " to " + vehicleCount + " vehicles");
-        }
-        
-        // Log high traffic situations
-        if (vehicleCount > 20) {
-            logMessage(String.format("High traffic volume: %d vehicles at %s (light: %s)", 
-                vehicleCount, intersectionId, lightColor));
-        }
-    }
-
     private void setupConnectionListeners() {
-        registryConnected.addListener((obs, oldVal, newVal) -> 
-            updateStatusLabel(registryStatusLabel, "Registry Service", newVal));
-        
-        trafficConnected.addListener((obs, oldVal, newVal) -> 
-            updateStatusLabel(trafficStatusLabel, "Traffic Service", newVal));
-        
-        binConnected.addListener((obs, oldVal, newVal) -> 
-            updateStatusLabel(binStatusLabel, "Bin Service", newVal));
-        
-        noiseConnected.addListener((obs, oldVal, newVal) -> 
-            updateStatusLabel(noiseStatusLabel, "Noise Service", newVal));
+        registryConnected.addListener((obs, oldVal, newVal) -> {
+            updateConnectionStatus("Registry", newVal);
+        });
+
+        trafficConnected.addListener((obs, oldVal, newVal) -> {
+            updateConnectionStatus("Traffic", newVal);
+        });
+
+        binConnected.addListener((obs, oldVal, newVal) -> {
+            updateConnectionStatus("Bin", newVal);
+        });
+
+        noiseConnected.addListener((obs, oldVal, newVal) -> {
+            updateConnectionStatus("Noise", newVal);
+        });
     }
 
+    /**
+     * Update the connection status in the UI
+     */
+    private void updateConnectionStatus(String service, boolean connected) {
+        Platform.runLater(() -> {
+            String status = connected ? "Connected" : "Disconnected";
+            statusLabel.setText(service + " Service: " + status);
+
+            // Update overall connection status
+            boolean allConnected = registryConnected.get() &&
+                                  trafficConnected.get() &&
+                                  binConnected.get() &&
+                                  noiseConnected.get();
+
+            if (allConnected) {
+                statusLabel.setText("All services connected");
+            }
+        });
+    }
+
+    /**
+     * Connect to all services
+     */
     private CompletableFuture<Void> connectToServices() {
         if (!isConnecting.compareAndSet(false, true)) {
             return CompletableFuture.completedFuture(null);
         }
 
         CompletableFuture<Void> future = new CompletableFuture<>();
+
+        Platform.runLater(() -> {
+            connectionProgress.setVisible(true);
+            statusLabel.setText("Connecting to services...");
+        });
+
         try {
+            // Connect to registry service with proper API key
+            String apiKey = SecurityConfig.DEFAULT_API_KEY;
+            logMessage("Using API key: " + (apiKey != null ? "[VALID KEY]" : "[MISSING KEY]"));
+
             registryChannel = ManagedChannelBuilder.forTarget(REGISTRY_ADDRESS)
                 .usePlaintext()
-                .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
+                .intercept(new ClientAuthInterceptor(apiKey))
+                .enableRetry()
+                .maxRetryAttempts(3)
                 .build();
+
             registryStub = RegistryGrpc.newStub(registryChannel);
-            
+
             // Start service discovery
             logMessage("Connecting to Registry Service at " + REGISTRY_ADDRESS);
             startServiceDiscovery(future);
             registryConnected.set(true);
-            
+
         } catch (Exception e) {
-            logger.error("Failed to connect to Registry Service", e);
-            logMessage("Error connecting to Registry Service: " + e.getMessage());
+            logger.error("Error connecting to services", e);
+            logMessage("Error: " + e.getMessage());
             future.completeExceptionally(e);
             isConnecting.set(false);
+
+            Platform.runLater(() -> {
+                connectionProgress.setVisible(false);
+                statusLabel.setText("Connection failed: " + e.getMessage());
+            });
         }
 
-        return future.whenComplete((v, t) -> isConnecting.set(false));
+        return future;
     }
 
+    /**
+     * Start service discovery
+     */
     private void startServiceDiscovery(CompletableFuture<Void> future) {
         ServiceFilter filter = ServiceFilter.newBuilder().build();
+
         registryStub.discoverServices(filter, new StreamObserver<ServiceInfo>() {
             @Override
             public void onNext(ServiceInfo service) {
@@ -1154,82 +768,64 @@ public class CityDashboard extends Application {
                 logger.error("Service discovery error", t);
                 logMessage("Error discovering services: " + t.getMessage());
                 future.completeExceptionally(t);
+                isConnecting.set(false);
+
+                Platform.runLater(() -> {
+                    connectionProgress.setVisible(false);
+                    statusLabel.setText("Service discovery failed");
+                });
             }
 
             @Override
             public void onCompleted() {
                 logMessage("Service discovery completed");
                 future.complete(null);
+                isConnecting.set(false);
+
+                Platform.runLater(() -> {
+                    connectionProgress.setVisible(false);
+                    statusLabel.setText("Service discovery completed");
+                });
             }
         });
     }
 
     /**
-     * Connect to a discovered service with improved error handling.
-     * This implementation adds:
-     * - Better port management and validation
-     * - Improved error handling with automatic retry
-     * - Connection status validation
-     * - Better logging
+     * Connect to a discovered service
      */
     private void connectToService(ServiceInfo service) {
-        // Validate service input
-        if (service == null || service.getServiceType().isEmpty() || service.getAddress().isEmpty()) {
-            logger.warn("Invalid service info received - unable to connect");
+        // Parse host and port from address
+        String[] parts = service.getAddress().split(":");
+        if (parts.length != 2) {
+            logger.warn("Invalid address format: {}", service.getAddress());
             return;
         }
-        
-        // Parse address and port with validation
-        String[] addressParts = service.getAddress().split(":");
-        String host = addressParts[0];
-        
-        if (host == null || host.isEmpty()) {
-            logger.warn("Invalid host in service address: {}", service.getAddress());
-            return;
-        }
-        
-        // Port management with defaults and validation
+
+        String host = parts[0];
         int port;
+
         try {
-            // Use service-specific default ports if none specified
-            if (addressParts.length > 1) {
-                port = Integer.parseInt(addressParts[1]);
-            } else {
-                // Default ports by service type
-                port = switch (service.getServiceType().toLowerCase()) {
-                    case "traffic" -> 50051;
-                    case "bin" -> 50052;
-                    case "noise" -> 50053;
-                    default -> 50051;
-                };
-                logger.info("No port specified for {} service, using default: {}", 
-                          service.getServiceType(), port);
-            }
-            
-            // Validate port range
-            if (port < 1 || port > 65535) {
-                logger.warn("Invalid port number: {}", port);
-                port = 50051; // Fallback to default
-            }
+            port = Integer.parseInt(parts[1]);
         } catch (NumberFormatException e) {
             logger.warn("Invalid port format in address: {}", service.getAddress());
             port = 50051; // Fallback to default
         }
-        
+
         // Get full address with validated port
         String fullAddress = host + ":" + port;
         logger.info("Connecting to {} service at {}", service.getServiceType(), fullAddress);
-        
+
         // Build channel with appropriate timeout and retry settings
         ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(host, port)
             .usePlaintext()
             .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY));
-            
+
         try {
             switch (service.getServiceType().toLowerCase()) {
                 case "traffic" -> {
                     trafficChannel = channelBuilder.build();
                     trafficStub = TrafficGrpc.newStub(trafficChannel);
+                    trafficBlockingStub = TrafficGrpc.newBlockingStub(trafficChannel);
                     trafficConnected.set(true);
                     logMessage("Connected to Traffic service at " + fullAddress);
                 }
@@ -1241,211 +837,1153 @@ public class CityDashboard extends Application {
                 }
                 case "noise" -> {
                     // Special handling for noise service which has connectivity issues
-                    try {
-                        noiseChannel = channelBuilder
-                            // Add more aggressive retry settings for noise service
-                            .enableRetry()
-                            .maxRetryAttempts(3)
-                            .build();
-                        
-                        noiseStub = NoiseGrpc.newStub(noiseChannel);
-                        
-                        // Verify connection is working with a quick ping
-                        boolean pingSuccess = pingNoiseService();
-                        if (pingSuccess) {
-                            noiseConnected.set(true);
-                            logMessage("Connected to Noise service at " + fullAddress);
-                        } else {
-                            logMessage("Warning: Connected to Noise service but ping failed. Service may be unstable.");
-                            // Still set connected since we'll retry operations as needed
-                            noiseConnected.set(true);
-                        }
-                    } catch (Exception e) {
-                        logger.error("Failed to connect to Noise service: {}", e.getMessage(), e);
-                        logMessage("Error connecting to Noise service: " + e.getMessage() + 
-                                 ". Will retry automatically when operations are requested.");
-                        
-                        // Schedule reconnection attempt
-                        scheduleNoiseReconnection();
+                    // Force port to 50051 as all services run on the same port
+                    String correctedAddress = host + ":50051";
+                    ManagedChannelBuilder<?> noiseChannelBuilder = ManagedChannelBuilder.forTarget(correctedAddress)
+                        .usePlaintext()
+                        .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
+                        .enableRetry()
+                        .maxRetryAttempts(5);
+
+                    noiseChannel = noiseChannelBuilder.build();
+                    noiseStub = NoiseGrpc.newStub(noiseChannel);
+
+                    // Verify connection is working with a quick ping
+                    boolean pingSuccess = pingNoiseService();
+                    if (pingSuccess) {
+                        noiseConnected.set(true);
+                        logMessage("Connected to Noise service at " + correctedAddress);
+                    } else {
+                        logMessage("Warning: Connected to Noise service but ping failed. Service may be unstable.");
+                        // Still set connected since we'll retry operations as needed
+                        noiseConnected.set(true);
                     }
                 }
-1227
-
-    private void startMonitoringServices() {
-        logMessage("Starting monitoring for connected services...");
-        
-        if (trafficConnected.get()) {
-            logMessage("Traffic service is connected - starting traffic monitoring");
-            startTrafficDataStream();
-        } else {
-            logMessage("Traffic service not connected - monitoring disabled");
-        }
-        
-        if (noiseConnected.get()) {
-            startNoiseMonitoring();
-        } else {
-            logMessage("Noise service not connected - monitoring disabled");
+                default -> {
+                    logger.warn("Unknown service type: {}", service.getServiceType());
+                    logMessage("Unknown service type: " + service.getServiceType());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error connecting to service: " + service.getServiceType(), e);
+            logMessage("Error connecting to " + service.getServiceType() + " service: " + e.getMessage());
         }
     }
 
-    private void startNoiseMonitoring() {
-        if (noiseStub == null || !noiseConnected.get()) {
-            logMessage("Cannot start noise monitoring - service not connected");
+    /**
+     * Ping the noise service to verify connection
+     */
+    private boolean pingNoiseService() {
+        try {
+            // Create a temporary stream observer to test connection
+            StreamObserver<Alert> testObserver = new StreamObserver<>() {
+                @Override
+                public void onNext(Alert value) {}
+
+                @Override
+                public void onError(Throwable t) {}
+
+                @Override
+                public void onCompleted() {}
+            };
+
+            StreamObserver<NoiseData> sender = noiseStub.monitorNoise(testObserver);
+
+            // Send a test data point
+            NoiseData testData = NoiseData.newBuilder()
+                .setSensorId("test_sensor")
+                .setDecibels(50.0f)
+                .build();
+
+            sender.onNext(testData);
+            sender.onCompleted();
+
+            return true;
+        } catch (Exception e) {
+            logger.error("Noise service ping failed", e);
+            return false;
+        }
+    }
+
+    /**
+     * Start monitoring all services
+     */
+    private void startMonitoringServices() {
+        // Start traffic monitoring or simulation
+        if (trafficConnected.get()) {
+            startTrafficMonitoring();
+        } else {
+            logMessage("Traffic service not connected - starting simulation");
+            startSimulatedTrafficData();
+        }
+
+        // Start bin monitoring or simulation
+        if (binConnected.get()) {
+            startBinMonitoring();
+        } else {
+            logMessage("Bin service not connected - starting simulation");
+            startSimulatedBinData();
+        }
+
+        // Start noise monitoring or simulation
+        if (noiseConnected.get()) {
+            startNoiseMonitoring();
+        } else {
+            logMessage("Noise service not connected - starting simulation");
+            startSimulatedNoiseData();
+        }
+
+        // Schedule periodic service check to maintain connections
+        executor.scheduleAtFixedRate(this::checkServiceConnections, 30, 30, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Periodically check service connections and attempt to reconnect if needed
+     */
+    private void checkServiceConnections() {
+        if (shouldStop.get()) {
             return;
         }
 
-        // Create bidirectional stream for noise monitoring
-        StreamObserver<Alert> alertObserver = new StreamObserver<Alert>() {
-            @Override
-            public void onNext(Alert alert) {
+        logMessage("Performing periodic service connection check");
+
+        // Check if registry is connected
+        if (!registryConnected.get()) {
+            logMessage("Registry service disconnected - attempting to reconnect");
+            connectToServices();
+            return;
+        }
+
+        // Check if any services are disconnected
+        boolean needsRefresh = false;
+
+        if (!trafficConnected.get()) {
+            logMessage("Traffic service disconnected");
+            needsRefresh = true;
+        }
+
+        if (!binConnected.get()) {
+            logMessage("Bin service disconnected");
+            needsRefresh = true;
+        }
+
+        if (!noiseConnected.get()) {
+            logMessage("Noise service disconnected");
+            needsRefresh = true;
+        }
+
+        // Refresh services if needed
+        if (needsRefresh) {
+            logMessage("Refreshing services to reconnect");
+            refreshServices();
+        }
+    }
+
+    /**
+     * Start monitoring traffic data
+     */
+    private void startTrafficMonitoring() {
+        // Get initial traffic summary
+        executor.execute(() -> {
+            try {
+                TrafficSummary summary = trafficBlockingStub
+                    .withDeadlineAfter(5, TimeUnit.SECONDS)
+                    .getTrafficSummary(Empty.newBuilder().build());
+
                 Platform.runLater(() -> {
-                    String prefix = alert.getIsCritical() ? "CRITICAL: " : "";
-                    noiseStatusArea.appendText(prefix + alert.getMessage() + "\n");
-                    logMessage("Noise alert: " + alert.getMessage());
+                    totalVehiclesLabel.setText("Total Vehicles: " + summary.getTotalVehicles());
+
+                    // Update intersection dropdown if needed
+                    for (IntersectionStatus status : summary.getIntersectionsList()) {
+                        if (!intersectionSelector.getItems().contains(status.getIntersectionId())) {
+                            intersectionSelector.getItems().add(status.getIntersectionId());
+                        }
+                    }
                 });
+            } catch (Exception e) {
+                logger.error("Error getting traffic summary", e);
+                // Generate random intersections if we can't get real ones
+                Platform.runLater(() -> {
+                    if (intersectionSelector.getItems().isEmpty()) {
+                        intersectionSelector.getItems().addAll(
+                            "Main-First", "Main-Second", "Broadway-Park", "Fifth-Central"
+                        );
+                    }
+                });
+            }
+        });
+
+        // Start streaming traffic data
+        try {
+            trafficStub.streamTraffic(Empty.newBuilder().build(), new StreamObserver<>() {
+                @Override
+                public void onNext(TrafficData data) {
+                    Platform.runLater(() -> {
+                        // Add to table
+                        trafficTable.getItems().add(0, new TrafficEntry(
+                            data.getVehicleCount(),
+                            formatTimestamp(data.getTimestamp())
+                        ));
+
+                        // Limit table size
+                        if (trafficTable.getItems().size() > 100) {
+                            trafficTable.getItems().remove(100, trafficTable.getItems().size());
+                        }
+
+                        // Update chart
+                        XYChart.Series<Number, Number> series = trafficChart.getData().get(0);
+
+                        // Add new data point
+                        series.getData().add(new XYChart.Data<>(
+                            series.getData().size(),
+                            data.getVehicleCount()
+                        ));
+
+                        // Limit chart size
+                        if (series.getData().size() > 20) {
+                            series.getData().remove(0);
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.error("Error streaming traffic data", t);
+                    logMessage("Traffic data stream error: " + t.getMessage());
+
+                    // Start generating simulated data instead
+                    startSimulatedTrafficData();
+
+                    // Try to reconnect after delay
+                    executor.schedule(this::reconnectTraffic, 30, TimeUnit.SECONDS);
+                }
+
+                private void reconnectTraffic() {
+                    if (!shouldStop.get()) {
+                        logMessage("Attempting to reconnect to Traffic service...");
+                        startTrafficMonitoring();
+                    }
+                }
+
+                @Override
+                public void onCompleted() {
+                    logMessage("Traffic data stream completed");
+                    // Start generating simulated data
+                    startSimulatedTrafficData();
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Error starting traffic stream", e);
+            logMessage("Error starting traffic stream: " + e.getMessage());
+            // Start generating simulated data instead
+            startSimulatedTrafficData();
+        }
+    }
+
+    /**
+     * Generate simulated traffic data when the real service is unavailable
+     */
+    private void startSimulatedTrafficData() {
+        logMessage("Starting simulated traffic data generation");
+
+        // Cancel any existing task
+        if (trafficSimulationTask != null) {
+            trafficSimulationTask.cancel(false);
+        }
+
+        // Generate initial data immediately
+        generateTrafficData();
+
+        // Start generating random traffic data
+        trafficSimulationTask = executor.scheduleAtFixedRate(this::generateTrafficData, 1, 5, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Generate a single traffic data point
+     */
+    private void generateTrafficData() {
+        if (!shouldStop.get()) {
+            // Generate random vehicle count (0-100)
+            int vehicleCount = (int)(Math.random() * 100);
+            String timestamp = java.time.OffsetDateTime.now().toString();
+
+            // Update UI
+            Platform.runLater(() -> {
+                try {
+                    // Add to table (if initialized)
+                    if (trafficTable != null) {
+                        trafficTable.getItems().add(0, new TrafficEntry(
+                            vehicleCount,
+                            formatTimestamp(timestamp)
+                        ));
+
+                        // Limit table size
+                        if (trafficTable.getItems().size() > 100) {
+                            trafficTable.getItems().remove(100, trafficTable.getItems().size());
+                        }
+
+                        // Update total vehicles
+                        int totalVehicles = 0;
+                        for (TrafficEntry entry : trafficTable.getItems()) {
+                            totalVehicles += entry.getVehicleCount();
+                        }
+                        if (totalVehiclesLabel != null) {
+                            totalVehiclesLabel.setText("Total Vehicles: " + totalVehicles);
+                        }
+                    }
+
+                    // Update chart (if initialized)
+                    if (trafficChart != null && !trafficChart.getData().isEmpty()) {
+                        XYChart.Series<Number, Number> series = trafficChart.getData().get(0);
+
+                        // Add new data point
+                        series.getData().add(new XYChart.Data<>(
+                            series.getData().size(),
+                            vehicleCount
+                        ));
+
+                        // Limit chart size
+                        if (series.getData().size() > 20) {
+                            series.getData().remove(0);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error updating traffic UI", e);
+                }
+            });
+
+            // Only log occasionally to avoid cluttering the log
+            if (Math.random() < 0.1) {
+                logMessage("Generated simulated traffic data: " + vehicleCount + " vehicles");
+            }
+        }
+    }
+
+    /**
+     * Start monitoring bin data
+     */
+    private void startBinMonitoring() {
+        try {
+            // Start monitoring for urgent collections
+            binStub.getUrgentCollections(Empty.newBuilder().build(), new StreamObserver<>() {
+                @Override
+                public void onNext(BinAlert alert) {
+                    Platform.runLater(() -> {
+                        String message = String.format(
+                            "[%s] Urgent collection needed for %s (%d%% full)",
+                            getCurrentTime(),
+                            alert.getBinId(),
+                            alert.getFillPercent()
+                        );
+
+                        updateStatusArea(binStatusArea, message);
+
+                        // Update bin fill level if it's one of our displayed bins
+                        updateBinFillLevel(alert.getBinId(), alert.getFillPercent());
+                    });
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.error("Error monitoring bin collections", t);
+                    logMessage("Bin collection monitoring error: " + t.getMessage());
+
+                    // Start simulated bin data
+                    startSimulatedBinData();
+                }
+
+                @Override
+                public void onCompleted() {
+                    logMessage("Bin collection monitoring completed");
+                    // Start simulated bin data
+                    startSimulatedBinData();
+                }
+            });
+
+            // Start reporting bin status
+            reportBinStatus();
+
+        } catch (Exception e) {
+            logger.error("Error starting bin monitoring", e);
+            logMessage("Error starting bin monitoring: " + e.getMessage());
+
+            // Start simulated bin data
+            startSimulatedBinData();
+        }
+    }
+
+    /**
+     * Report bin status to the service
+     */
+    private void reportBinStatus() {
+        if (!binConnected.get() || shouldStop.get()) {
+            return;
+        }
+
+        try {
+            // Create response observer
+            StreamObserver<Summary> responseObserver = new StreamObserver<>() {
+                @Override
+                public void onNext(Summary summary) {
+                    logMessage("Bin report summary received: avg=" + summary.getAverage() + "%");
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.error("Error reporting bin status", t);
+                    // Start simulated bin data
+                    startSimulatedBinData();
+                }
+
+                @Override
+                public void onCompleted() {
+                    logMessage("Completed urgent collections check. Found 0 bins needing attention.");
+                }
+            };
+
+            // Create request observer
+            StreamObserver<BinStatus> requestObserver = binStub.reportBins(responseObserver);
+
+            // Send bin status for each bin
+            for (int i = 0; i < binFillLevels.length; i++) {
+                final String binId = "Bin-" + (i + 1);
+                final int fillPercent = (int)(Math.random() * 100);
+
+                // Update UI
+                final int index = i;
+                Platform.runLater(() -> {
+                    updateBinFillLevel(binId, fillPercent);
+                });
+
+                // Send to service
+                requestObserver.onNext(BinStatus.newBuilder()
+                    .setBinId(binId)
+                    .setFillPercent(fillPercent)
+                    .build());
+            }
+
+            // Complete the request
+            requestObserver.onCompleted();
+
+            // Schedule next report
+            executor.schedule(this::reportBinStatus, 10, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            logger.error("Error reporting bin status", e);
+            // Start simulated bin data
+            startSimulatedBinData();
+        }
+    }
+
+    /**
+     * Generate simulated bin data when the real service is unavailable
+     */
+    private void startSimulatedBinData() {
+        logMessage("Starting simulated bin data generation");
+
+        // Cancel any existing task
+        if (binSimulationTask != null) {
+            binSimulationTask.cancel(false);
+        }
+
+        // Generate initial data immediately
+        generateBinData();
+
+        // Start generating random bin data
+        binSimulationTask = executor.scheduleAtFixedRate(this::generateBinData, 1, 8, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Generate a single set of bin data
+     */
+    private void generateBinData() {
+        if (!shouldStop.get()) {
+            try {
+                // Check if UI components are initialized
+                if (binFillLevels == null || binLabels == null) {
+                    return;
+                }
+
+                // Generate random bin data
+                for (int i = 0; i < binFillLevels.length; i++) {
+                    final int index = i;
+                    final String binId = "Bin-" + (i + 1);
+                    final int fillPercent = (int)(Math.random() * 100);
+
+                    // Update UI
+                    Platform.runLater(() -> {
+                        try {
+                            updateBinFillLevel(binId, fillPercent);
+                        } catch (Exception e) {
+                            logger.error("Error updating bin fill level", e);
+                        }
+                    });
+
+                    // Generate urgent collection alerts for bins that are almost full
+                    if (fillPercent > 90) {
+                        final int finalFillPercent = fillPercent;
+                        Platform.runLater(() -> {
+                            try {
+                                if (binStatusArea != null) {
+                                    String message = String.format(
+                                        "[%s] Urgent collection needed for %s (%d%% full)",
+                                        getCurrentTime(),
+                                        binId,
+                                        finalFillPercent
+                                    );
+                                    updateStatusArea(binStatusArea, message);
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error updating bin status area", e);
+                            }
+                        });
+                    }
+                }
+
+                // Only log occasionally to avoid cluttering the log
+                if (Math.random() < 0.1) {
+                    logMessage("Generated simulated bin data for " + binFillLevels.length + " bins");
+                }
+            } catch (Exception e) {
+                logger.error("Error generating bin data", e);
+            }
+        }
+    }
+
+    /**
+     * Update bin fill level in the UI
+     */
+    private void updateBinFillLevel(String binId, int fillPercent) {
+        for (int i = 0; i < binLabels.length; i++) {
+            if (binLabels[i].getText().startsWith(binId)) {
+                binLabels[i].setText(binId + ": " + fillPercent + "%");
+                binFillLevels[i].setProgress(fillPercent / 100.0);
+
+                // Set color based on fill level
+                if (fillPercent > 90) {
+                    binFillLevels[i].setStyle("-fx-accent: red;");
+                } else if (fillPercent > 70) {
+                    binFillLevels[i].setStyle("-fx-accent: orange;");
+                } else {
+                    binFillLevels[i].setStyle("-fx-accent: green;");
+                }
+
+                break;
+            }
+        }
+    }
+
+    /**
+     * Start monitoring noise data
+     */
+    private void startNoiseMonitoring() {
+        try {
+            // Set up noise monitoring stream
+            StreamObserver<Alert> alertObserver = new StreamObserver<>() {
+                @Override
+                public void onNext(Alert alert) {
+                    Platform.runLater(() -> {
+                        String prefix = alert.getIsCritical() ? "[CRITICAL] " : "";
+                        String message = String.format(
+                            "[%s] %s%s",
+                            getCurrentTime(),
+                            prefix,
+                            alert.getMessage()
+                        );
+
+                        updateStatusArea(noiseStatusArea, message);
+                    });
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    logger.error("Error in noise monitoring", t);
+                    logMessage("Noise monitoring error: " + t.getMessage());
+
+                    // Start sending simulated noise data
+                    startSimulatedNoiseData();
+
+                    // Try to reconnect
+                    if (!shouldStop.get()) {
+                        executor.schedule(() -> {
+                            logMessage("Attempting to reconnect noise monitoring...");
+                            startNoiseMonitoring();
+                        }, 30, TimeUnit.SECONDS);
+                    }
+                }
+
+                @Override
+                public void onCompleted() {
+                    logMessage("Noise monitoring completed");
+                    // Start sending simulated noise data
+                    startSimulatedNoiseData();
+                }
+            };
+
+            noiseStreamObserver = noiseStub.monitorNoise(alertObserver);
+
+            // Start sending noise data
+            sendNoiseData();
+
+        } catch (Exception e) {
+            logger.error("Error starting noise monitoring", e);
+            logMessage("Error starting noise monitoring: " + e.getMessage());
+
+            // Start sending simulated noise data
+            startSimulatedNoiseData();
+        }
+    }
+
+    /**
+     * Send noise data to the service
+     */
+    private void sendNoiseData() {
+        if (noiseStreamObserver == null || !noiseConnected.get() || shouldStop.get()) {
+            return;
+        }
+
+        try {
+            // Simulate random noise data from different zones
+            String[] zones = {"Zone-1", "Zone-2", "Zone-3"};
+            String sensorId = zones[(int)(Math.random() * zones.length)] + "_sensor1";
+            float decibels = 40 + (float)(Math.random() * 50); // 40-90 dB
+
+            NoiseData data = NoiseData.newBuilder()
+                .setSensorId(sensorId)
+                .setDecibels(decibels)
+                .build();
+
+            noiseStreamObserver.onNext(data);
+
+            // Log significant noise events
+            if (decibels > 80) {
+                logMessage("High noise level detected at " + sensorId + ": " + decibels + " dB");
+            }
+
+            // Schedule next data point
+            executor.schedule(this::sendNoiseData, 3, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            logger.error("Error sending noise data", e);
+            // Start simulated noise data
+            startSimulatedNoiseData();
+        }
+    }
+
+    /**
+     * Generate simulated noise alerts when the real service is unavailable
+     */
+    private void startSimulatedNoiseData() {
+        logMessage("Starting simulated noise data generation");
+
+        // Cancel any existing task
+        if (noiseMonitoringTask != null) {
+            noiseMonitoringTask.cancel(false);
+        }
+
+        // Generate initial data immediately
+        generateNoiseData();
+
+        // Start generating random noise alerts
+        noiseMonitoringTask = executor.scheduleAtFixedRate(this::generateNoiseData, 1, 4, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Generate a single noise data point
+     */
+    private void generateNoiseData() {
+        if (!shouldStop.get()) {
+            try {
+                // Generate random noise data
+                String[] zones = {"Zone-1", "Zone-2", "Zone-3"};
+                String zone = zones[(int)(Math.random() * zones.length)];
+                float decibels = 40 + (float)(Math.random() * 50); // 40-90 dB
+                boolean isCritical = decibels > 80;
+
+                // Create alert message
+                String timeContext = LocalDateTime.now().getHour() >= 22 || LocalDateTime.now().getHour() < 7 ? "nighttime" : "daytime";
+                String message = String.format(
+                    "High noise level detected in zone %s: %.1f dB (limit: %.1f dB, %s)",
+                    zone, decibels, isCritical ? 70.0f : 55.0f, timeContext
+                );
+
+                // Update UI
+                final String finalMessage = message;
+                final boolean finalIsCritical = isCritical;
+                Platform.runLater(() -> {
+                    try {
+                        if (noiseStatusArea != null) {
+                            String prefix = finalIsCritical ? "[CRITICAL] " : "";
+                            String formattedMessage = String.format(
+                                "[%s] %s%s",
+                                getCurrentTime(),
+                                prefix,
+                                finalMessage
+                            );
+
+                            updateStatusArea(noiseStatusArea, formattedMessage);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error updating noise status area", e);
+                    }
+                });
+
+                // Log significant noise events, but only occasionally
+                if (isCritical && Math.random() < 0.3) {
+                    logMessage("Simulated critical noise level in " + zone + ": " + decibels + " dB");
+                }
+            } catch (Exception e) {
+                logger.error("Error generating noise data", e);
+            }
+        }
+    }
+
+    /**
+     * Set traffic light color for an intersection
+     */
+    private void setTrafficLight(String intersection, String color) {
+        if (intersection == null || color == null || intersection.isEmpty() || color.isEmpty()) {
+            logMessage("Please select both intersection and light color");
+            return;
+        }
+
+        if (trafficChannel == null || !trafficConnected.get()) {
+            logMessage("Error: Not connected to traffic service");
+            // Try to reconnect
+            refreshServices();
+            return;
+        }
+
+        executor.execute(() -> {
+            try {
+                LightCommand command = LightCommand.newBuilder()
+                    .setIntersection(intersection)
+                    .setColor(color)
+                    .build();
+
+                Response response = trafficBlockingStub
+                    .withDeadlineAfter(5, TimeUnit.SECONDS)
+                    .withWaitForReady()
+                    .setLight(command);
+
+                logMessage("Traffic light set: " + response.getStatus());
+
+                // Update traffic summary after changing light
+                try {
+                    TrafficSummary summary = trafficBlockingStub
+                        .withDeadlineAfter(5, TimeUnit.SECONDS)
+                        .getTrafficSummary(Empty.newBuilder().build());
+
+                    Platform.runLater(() -> {
+                        totalVehiclesLabel.setText("Total Vehicles: " + summary.getTotalVehicles());
+                    });
+                } catch (Exception e) {
+                    logger.error("Error getting traffic summary", e);
+                    // Don't show this error to the user as it's not critical
+                }
+
+            } catch (Exception e) {
+                logger.error("Error setting traffic light", e);
+                String errorMsg = e.getMessage();
+
+                if (errorMsg != null && errorMsg.contains("UNAVAILABLE")) {
+                    logMessage("Traffic service unavailable. Attempting to reconnect...");
+                    trafficConnected.set(false);
+                    refreshServices();
+                } else {
+                    logMessage("Error setting traffic light: " + errorMsg);
+                }
+            }
+        });
+    }
+
+    /**
+     * Get collection route for a zone
+     */
+    private void getCollectionRoute(String zoneId) {
+        if (zoneId == null || zoneId.isEmpty()) {
+            updateStatusArea(binStatusArea, "Error: Please select a valid zone");
+            return;
+        }
+
+        // Try to use the real service if connected
+        if (binChannel != null && binConnected.get()) {
+            executor.execute(() -> {
+                try {
+                    Zone zone = Zone.newBuilder()
+                        .setAreaId(zoneId)
+                        .build();
+
+                    Route route = BinGrpc.newBlockingStub(binChannel)
+                        .withDeadlineAfter(5, TimeUnit.SECONDS)
+                        .withWaitForReady()
+                        .getRoute(zone);
+
+                    StringBuilder message = new StringBuilder();
+                    message.append("[").append(getCurrentTime()).append("] ");
+                    message.append("Collection route for ").append(zoneId).append(":\n");
+
+                    if (route.getBinsCount() == 0) {
+                        // Fall back to simulated data if the service returns no bins
+                        getSimulatedCollectionRoute(zoneId);
+                        return;
+                    } else {
+                        message.append("Priority collection bins:\n");
+                        for (String binId : route.getBinsList()) {
+                            message.append("- ").append(binId).append("\n");
+                        }
+                    }
+
+                    updateStatusArea(binStatusArea, message.toString());
+                    logMessage("Retrieved collection route for zone " + zoneId);
+
+                } catch (Exception e) {
+                    logger.error("Error getting collection route", e);
+                    String errorMsg = e.getMessage();
+
+                    if (errorMsg != null && errorMsg.contains("UNAVAILABLE")) {
+                        updateStatusArea(binStatusArea, "Bin service unavailable. Using simulated data...");
+                        binConnected.set(false);
+                        getSimulatedCollectionRoute(zoneId);
+                    } else {
+                        updateStatusArea(binStatusArea, "Error getting collection route. Using simulated data...");
+                        getSimulatedCollectionRoute(zoneId);
+                    }
+                }
+            });
+        } else {
+            // Use simulated data if not connected
+            getSimulatedCollectionRoute(zoneId);
+        }
+    }
+
+    /**
+     * Generate a simulated collection route based on current bin fill levels
+     */
+    private void getSimulatedCollectionRoute(String zoneId) {
+        executor.execute(() -> {
+            try {
+                // Check if UI components are initialized
+                if (binFillLevels == null || binLabels == null || binStatusArea == null) {
+                    logMessage("Cannot generate collection route: UI components not initialized");
+                    return;
+                }
+
+                StringBuilder message = new StringBuilder();
+                message.append("[").append(getCurrentTime()).append("] ");
+                message.append("Collection route for ").append(zoneId).append(":\n");
+
+                // Get bins that need collection (over 70% full)
+                List<String> binsToCollect = new ArrayList<>();
+
+                // Check all bins in the selected zone
+                // For simplicity, we'll assume each zone has 1-2 bins with matching zone number
+                for (int i = 0; i < binFillLevels.length; i++) {
+                    String binId = "Bin-" + (i + 1);
+                    String binText = "";
+
+                    // Safely get the bin text
+                    if (binLabels[i] != null) {
+                        binText = binLabels[i].getText();
+                    }
+
+                    // Extract fill percentage from label text (format: "Bin-X: YY%")
+                    int fillPercent = 0;
+                    try {
+                        if (binText != null && !binText.isEmpty() && binText.contains(":") && binText.contains("%")) {
+                            String percentText = binText.substring(binText.indexOf(":") + 1, binText.indexOf("%")).trim();
+                            fillPercent = Integer.parseInt(percentText);
+                        } else {
+                            // Use a random value if parsing fails
+                            fillPercent = (int)(Math.random() * 100);
+                        }
+                    } catch (Exception e) {
+                        // Use a random value if parsing fails
+                        fillPercent = (int)(Math.random() * 100);
+                    }
+
+                    // Add bin to collection list if it's in the right zone and fill level is high
+                    boolean inSelectedZone = false;
+
+                    // Match bins to zones based on their number
+                    if (zoneId.equals("Zone-1") && (i == 0 || i == 1)) {
+                        inSelectedZone = true;
+                    } else if (zoneId.equals("Zone-2") && (i == 1 || i == 2)) {
+                        inSelectedZone = true;
+                    } else if (zoneId.equals("Zone-3") && (i == 2 || i == 3)) {
+                        inSelectedZone = true;
+                    } else if (zoneId.equals("Zone-4") && (i == 3 || i == 0)) {
+                        inSelectedZone = true;
+                    }
+
+                    if (inSelectedZone && fillPercent >= 70) {
+                        binsToCollect.add(binId + " " + fillPercent + "%");
+                    }
+                }
+
+                // Add some randomness - occasionally add an extra bin
+                if (Math.random() < 0.3) {
+                    int randomBin = (int)(Math.random() * 4) + 1;
+                    String extraBin = "Bin-" + randomBin + " (special collection)";
+                    if (!binsToCollect.contains(extraBin)) {
+                        binsToCollect.add(extraBin);
+                    }
+                }
+
+                // Build the message
+                if (binsToCollect.isEmpty()) {
+                    message.append("No bins require collection at this time.");
+                } else {
+                    message.append("Priority collection bins:\n");
+                    for (String binId : binsToCollect) {
+                        message.append("- ").append(binId).append("\n");
+                    }
+                }
+
+                final String finalMessage = message.toString();
+                Platform.runLater(() -> {
+                    updateStatusArea(binStatusArea, finalMessage);
+                });
+
+                logMessage("Generated simulated collection route for zone " + zoneId +
+                          " with " + binsToCollect.size() + " bins");
+            } catch (Exception e) {
+                logger.error("Error generating collection route", e);
+                Platform.runLater(() -> {
+                    if (binStatusArea != null) {
+                        updateStatusArea(binStatusArea, "Error generating collection route: " + e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Set noise thresholds for a zone
+     */
+    private void setNoiseThresholds(String zone, double dayLimit, double nightLimit) {
+        if (noiseChannel == null || zone == null) {
+            updateStatusArea(noiseStatusArea, "Error: Not connected to noise service or invalid zone");
+            return;
+        }
+
+        executor.execute(() -> {
+            try {
+                NoiseThreshold threshold = NoiseThreshold.newBuilder()
+                    .setZoneId(zone)
+                    .setDayLimit((float) dayLimit)
+                    .setNightLimit((float) nightLimit)
+                    .build();
+
+                // Use a timeout to prevent hanging
+                Response response = NoiseGrpc.newBlockingStub(noiseChannel)
+                    .withDeadlineAfter(5, TimeUnit.SECONDS)
+                    .withWaitForReady()
+                    .setZoneThreshold(threshold);
+
+                updateStatusArea(noiseStatusArea, "Thresholds updated: " + response.getStatus());
+
+            } catch (Exception e) {
+                logger.error("Error setting noise thresholds", e);
+                String errorMsg = e.getMessage();
+
+                // Check if it's a connection issue
+                if (errorMsg != null && errorMsg.contains("Connection refused")) {
+                    updateStatusArea(noiseStatusArea, "Error: Cannot connect to noise service. The service may be running on a different port.");
+
+                    // Try to reconnect with corrected port
+                    reconnectNoiseService();
+                } else {
+                    updateStatusArea(noiseStatusArea, "Error: " + errorMsg);
+                }
+            }
+        });
+    }
+
+    /**
+     * Attempt to reconnect to the noise service with corrected port
+     */
+    private void reconnectNoiseService() {
+        try {
+            // Close existing channel if any
+            if (noiseChannel != null) {
+                noiseChannel.shutdown();
+            }
+
+            // Create new channel with port 50051
+            String correctedAddress = "localhost:50051";
+            noiseChannel = ManagedChannelBuilder.forTarget(correctedAddress)
+                .usePlaintext()
+                .intercept(new ClientAuthInterceptor(SecurityConfig.DEFAULT_API_KEY))
+                .enableRetry()
+                .maxRetryAttempts(3)
+                .build();
+
+            noiseStub = NoiseGrpc.newStub(noiseChannel);
+
+            // Test connection
+            boolean success = pingNoiseService();
+            if (success) {
+                noiseConnected.set(true);
+                logMessage("Reconnected to Noise service at " + correctedAddress);
+                updateStatusArea(noiseStatusArea, "Reconnected to Noise service. Please try again.");
+            } else {
+                logMessage("Failed to reconnect to Noise service");
+            }
+        } catch (Exception e) {
+            logger.error("Error reconnecting to noise service", e);
+        }
+    }
+
+    /**
+     * Refresh the list of services
+     */
+    private void refreshServices() {
+        if (registryChannel == null) {
+            logMessage("Error: Not connected to registry service");
+            return;
+        }
+
+        Platform.runLater(() -> {
+            servicesList.getItems().clear();
+            connectionProgress.setVisible(true);
+            statusLabel.setText("Refreshing services...");
+        });
+
+        ServiceFilter filter = ServiceFilter.newBuilder().build();
+
+        registryStub.discoverServices(filter, new StreamObserver<>() {
+            private boolean foundServices = false;
+
+            @Override
+            public void onNext(ServiceInfo service) {
+                foundServices = true;
+                Platform.runLater(() -> {
+                    servicesList.getItems().add(
+                        String.format("%s (%s)", service.getServiceType(), service.getAddress())
+                    );
+                });
+
+                // Reconnect to the service if we're not already connected
+                connectToService(service);
             }
 
             @Override
             public void onError(Throwable t) {
-                logMessage("Error in noise monitoring: " + t.getMessage());
-                // Try to reconnect after a delay
-                if (!shouldStop.get()) {
-                    executor.schedule(this::retryNoiseMonitoring, 5, TimeUnit.SECONDS);
-                }
-            }
+                logger.error("Service refresh error", t);
+                logMessage("Error refreshing services: " + t.getMessage());
 
-            private void retryNoiseMonitoring() {
-                if (!shouldStop.get()) {
-                    logMessage("Attempting to reconnect to noise service...");
-                    startNoiseMonitoring();
-                }
+                Platform.runLater(() -> {
+                    connectionProgress.setVisible(false);
+                    statusLabel.setText("Service refresh failed");
+                });
             }
 
             @Override
             public void onCompleted() {
-                logMessage("Noise monitoring stream completed");
-            }
-        };
+                logMessage("Service refresh completed");
 
-        noiseStreamObserver = noiseStub.monitorNoise(alertObserver);
-        
-        // Send simulated noise data periodically
-        noiseMonitoringTask = executor.scheduleAtFixedRate(() -> {
-            if (!shouldStop.get() && noiseConnected.get()) {
-                try {
-                    // Simulate random noise data from different zones
-                    String[] zones = {"Zone-1", "Zone-2", "Zone-3"};
-                    String sensorId = zones[(int)(Math.random() * zones.length)] + "_sensor1";
-                    float decibels = 40 + (float)(Math.random() * 50); // 40-90 dB
-                    
-                    NoiseData data = NoiseData.newBuilder()
-                        .setSensorId(sensorId)
-                        .setDecibels(decibels)
-                        .build();
-                    
-                    noiseStreamObserver.onNext(data);
-                    
-                    // Log significant noise events
-                    if (decibels > 80) {
-                        logMessage("High noise level detected at " + sensorId + ": " + decibels + " dB");
-                    }
-                } catch (Exception e) {
-                    logger.error("Error sending noise data", e);
-                    if (noiseStreamObserver != null) {
-                        try {
-                            noiseStreamObserver.onCompleted();
-                        } catch (Exception ignored) {}
-                    }
-                    startNoiseMonitoring(); // Restart the stream
+                // If no services were found, try to register them again
+                if (!foundServices) {
+                    logMessage("No services found. Attempting to re-register services...");
+                    registerServices();
                 }
-            }
-        }, 2, 10, TimeUnit.SECONDS);
-        
-        logMessage("Started noise monitoring");
-    }
 
-    private void refreshServices() {
-        servicesList.getItems().clear();
-        startServiceDiscovery(new CompletableFuture<>());
-    }
-
-    private synchronized void updateTrafficSummary(TrafficSummary summary) {
-        totalVehicles.set(summary.getTotalVehicles());
-        
-        for (IntersectionStatus status : summary.getIntersectionsList()) {
-            String id = status.getIntersectionId();
-            TrafficEntry entry = intersectionMap.get(id);
-            
-            if (entry == null) {
-                entry = new TrafficEntry(
-                    id,
-                    status.getCurrentColor(),
-                    status.getWaitingVehicles()
-                );
-                intersectionMap.put(id, entry);
-                trafficData.add(entry);
-                
-                // Update intersection selector
                 Platform.runLater(() -> {
-                    if (!intersectionSelector.getItems().contains(id)) {
-                        intersectionSelector.getItems().add(id);
-                    }
+                    connectionProgress.setVisible(false);
+                    statusLabel.setText("Service refresh completed");
                 });
-            } else {
-                entry.setLightColor(status.getCurrentColor());
-                entry.setWaitingVehicles(status.getWaitingVehicles());
             }
-        }
-    }
-    
-    @Override
-    public void stop() {
-        shouldStop.set(true);
-        
-        // Cancel all scheduled tasks
-        if (executor != null) {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
-        
-        // Clean up stream observers
-        if (noiseStreamObserver != null) {
-            try {
-                noiseStreamObserver.onCompleted();
-            } catch (Exception ignored) {}
-        }
-        
-        // Close all channels
-        shutdownChannel(registryChannel);
-        shutdownChannel(trafficChannel);
-        shutdownChannel(binChannel);
-        shutdownChannel(noiseChannel);
-        
-        logger.info("Application shutdown completed");
+        });
     }
 
-    private void shutdownChannel(ManagedChannel channel) {
-        if (channel != null) {
-            try {
-                channel.shutdown();
-                if (!channel.awaitTermination(5, TimeUnit.SECONDS)) {
-                    channel.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                channel.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
+    /**
+     * Register services with the registry
+     * This is used when services are marked as stale and removed from the registry
+     */
+    private void registerServices() {
+        if (registryChannel == null) {
+            logMessage("Error: Not connected to registry service");
+            return;
+        }
+
+        // Register traffic service
+        registerService("traffic", "localhost:50051");
+
+        // Register bin service
+        registerService("bin", "localhost:50051");
+
+        // Register noise service
+        registerService("noise", "localhost:50051");
+
+        // Schedule a refresh after registration
+        executor.schedule(this::refreshServices, 2, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Register a service with the registry
+     */
+    private void registerService(String type, String address) {
+        try {
+            ServiceInfo serviceInfo = ServiceInfo.newBuilder()
+                .setServiceType(type)
+                .setServiceId(type + "_" + System.currentTimeMillis())
+                .setAddress(address)
+                .build();
+
+            Confirmation confirmation = RegistryGrpc.newBlockingStub(registryChannel)
+                .withDeadlineAfter(5, TimeUnit.SECONDS)
+                .register(serviceInfo);
+
+            logMessage("Registered service: " + type + " at " + address + " - " + confirmation.getStatus());
+        } catch (Exception e) {
+            logger.error("Error registering service: " + type, e);
+            logMessage("Error registering service: " + type + " - " + e.getMessage());
         }
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    /**
+     * Log a message to both the logger and the UI
+     */
+    private void logMessage(String message) {
+        logger.info(message);
+
+        Platform.runLater(() -> {
+            String formattedMessage = "[" + getCurrentTime() + "] " + message;
+            systemLogArea.appendText(formattedMessage + "\n");
+
+            // Auto-scroll to bottom
+            systemLogArea.setScrollTop(Double.MAX_VALUE);
+        });
+    }
+
+    /**
+     * Update a status text area with a new message
+     */
+    private void updateStatusArea(TextArea area, String message) {
+        Platform.runLater(() -> {
+            area.appendText(message + "\n");
+
+            // Auto-scroll to bottom
+            area.setScrollTop(Double.MAX_VALUE);
+        });
+    }
+
+    /**
+     * Get the current time as a formatted string
+     */
+    private String getCurrentTime() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+    }
+
+    /**
+     * Format a timestamp string
+     */
+    private String formatTimestamp(String timestamp) {
+        try {
+            return timestamp.replace("T", " ").replace("Z", "").substring(0, 19);
+        } catch (Exception e) {
+            return timestamp;
+        }
     }
 }
