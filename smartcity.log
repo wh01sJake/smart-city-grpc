@@ -547,3 +547,495 @@ Caused by: java.net.ConnectException: Connection refused: getsockopt
 2025-04-14 00:07:12 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Application shutdown completed
 2025-04-14 00:07:13 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
 2025-04-14 00:07:13 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 09:45:04 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 09:45:04 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 09:45:05 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 09:45:05 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 09:45:49 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 09:45:49 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-14 09:45:49 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-14 09:45:59 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 09:45:59 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 09:45:59 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 09:45:59 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 09:46:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Shutting down application
+2025-04-14 09:46:48 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Shutting down application
+2025-04-14 09:46:48 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 09:46:48 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 09:49:51 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 09:49:51 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 09:50:27 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Using API key: [VALID KEY]
+2025-04-14 09:50:27 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 09:50:27 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 09:50:27 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 09:50:27 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 09:50:36 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 09:50:36 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-14 09:50:36 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-14 09:50:41 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Error: Not connected to traffic service or invalid parameters
+2025-04-14 09:51:10 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 09:51:10 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 09:57:54 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 09:57:54 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Using API key: [VALID KEY]
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: traffic at localhost:50051
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: traffic at localhost:50051 - Service registration updated
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: bin at localhost:50051
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: bin at localhost:50051 - Service registration updated
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50051
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: noise at localhost:50051 - Service registered successfully
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Traffic service not connected - monitoring disabled
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Bin service not connected - monitoring disabled
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Noise service not connected - monitoring disabled
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 09:58:10 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 09:58:10 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service refresh completed
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 09:58:12 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 09:58:12 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 09:58:34 [grpc-default-executor-1] INFO  com.smartcity.services.TrafficService - Light at Main-First changed to RED
+2025-04-14 09:58:34 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Traffic light set: Light changed successfully
+2025-04-14 09:58:34 [grpc-default-executor-1] INFO  com.smartcity.services.TrafficService - Traffic summary sent: 0 total vehicles, 1 intersections
+2025-04-14 09:58:39 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 09:58:40 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 09:58:54 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50051
+2025-04-14 09:58:54 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-14 09:58:54 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-14 09:58:58 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-1 with 0 priority bins
+2025-04-14 09:58:58 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-1
+2025-04-14 09:59:03 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-2 with 0 priority bins
+2025-04-14 09:59:03 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-2
+2025-04-14 09:59:05 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-3 with 0 priority bins
+2025-04-14 09:59:05 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-3
+2025-04-14 09:59:07 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-4 with 0 priority bins
+2025-04-14 09:59:07 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-4
+2025-04-14 09:59:10 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 09:59:11 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Updated noise thresholds for zone Zone-1: day=70.0 dB, night=55.0 dB
+2025-04-14 09:59:40 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:00:10 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:00:20 [grpc-default-executor-2] INFO  com.smartcity.services.BinService - Route generated for zone Zone-3 with 0 priority bins
+2025-04-14 10:00:20 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-3
+2025-04-14 10:00:40 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:01:10 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:01:40 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:02:10 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:02:40 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:03:10 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:03:40 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:04:10 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:04:40 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:05:10 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:05:18 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 10:05:18 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 10:05:26 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 10:05:26 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:06:02 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Using API key: [VALID KEY]
+2025-04-14 10:06:02 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: traffic at localhost:50051
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: traffic at localhost:50051 - Service registration updated
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: bin at localhost:50051
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: bin at localhost:50051 - Service registration updated
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50051
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: noise at localhost:50051 - Service registered successfully
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Traffic service not connected - monitoring disabled
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Bin service not connected - monitoring disabled
+2025-04-14 10:06:02 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Noise service not connected - monitoring disabled
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50051
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service refresh completed
+2025-04-14 10:06:04 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:06:11 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50051
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service refresh completed
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:06:26 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:06:32 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:06:38 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Light at Main-Second changed to RED
+2025-04-14 10:06:38 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Traffic light set: Light changed successfully
+2025-04-14 10:06:38 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Traffic summary sent: 0 total vehicles, 1 intersections
+2025-04-14 10:06:41 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50051
+2025-04-14 10:06:41 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-14 10:06:41 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-14 10:07:02 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:07:32 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:08:02 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:08:07 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 10:08:07 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 10:12:02 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 10:12:02 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:12:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulations immediately
+2025-04-14 10:12:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated traffic data generation
+2025-04-14 10:12:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated bin data generation
+2025-04-14 10:12:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated noise data generation
+2025-04-14 10:12:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Using API key: [VALID KEY]
+2025-04-14 10:12:22 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: traffic at localhost:50051
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: traffic at localhost:50051 - Service registration updated
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: bin at localhost:50051
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: bin at localhost:50051 - Service registration updated
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50051
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: noise at localhost:50051 - Service registered successfully
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Traffic service not connected - starting simulation
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated traffic data generation
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Bin service not connected - starting simulation
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated bin data generation
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Noise service not connected - starting simulation
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated noise data generation
+2025-04-14 10:12:23 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:12:23 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:12:23 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:12:23 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:12:23 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:12:23 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:12:23 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service refresh completed
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:12:25 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:12:32 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Generated simulated bin data for 4 bins
+2025-04-14 10:12:47 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 10:12:53 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:13:02 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50051
+2025-04-14 10:13:02 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-14 10:13:02 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-14 10:13:23 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:13:29 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 68 vehicles
+2025-04-14 10:13:49 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 77 vehicles
+2025-04-14 10:13:53 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:14:23 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:14:53 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:14:56 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-1: 81.93259 dB
+2025-04-14 10:15:04 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 11 vehicles
+2025-04-14 10:15:23 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:15:34 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 44 vehicles
+2025-04-14 10:15:53 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:15:56 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-1: 83.211105 dB
+2025-04-14 10:16:23 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:16:39 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 53 vehicles
+2025-04-14 10:16:40 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-2: 84.72582 dB
+2025-04-14 10:16:40 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Generated simulated bin data for 4 bins
+2025-04-14 10:16:44 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-2: 80.547775 dB
+2025-04-14 10:16:53 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:17:12 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-3: 84.36876 dB
+2025-04-14 10:17:12 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated bin data for 4 bins
+2025-04-14 10:17:23 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:17:53 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:18:12 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-3: 82.38591 dB
+2025-04-14 10:18:19 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 27 vehicles
+2025-04-14 10:18:20 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-3: 85.19725 dB
+2025-04-14 10:18:23 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:18:53 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:19:08 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-3 with 0 priority bins
+2025-04-14 10:19:08 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-3
+2025-04-14 10:19:15 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-2 with 0 priority bins
+2025-04-14 10:19:15 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-2
+2025-04-14 10:19:18 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-1 with 0 priority bins
+2025-04-14 10:19:18 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-1
+2025-04-14 10:19:21 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-4 with 0 priority bins
+2025-04-14 10:19:21 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Retrieved collection route for zone Zone-4
+2025-04-14 10:19:23 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:19:24 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 71 vehicles
+2025-04-14 10:19:34 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Updated noise thresholds for zone Zone-1: day=70.0 dB, night=55.0 dB
+2025-04-14 10:19:48 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-2: 82.11136 dB
+2025-04-14 10:19:53 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:20:04 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 96 vehicles
+2025-04-14 10:20:14 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 96 vehicles
+2025-04-14 10:20:23 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:20:34 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 53 vehicles
+2025-04-14 10:20:41 [grpc-default-executor-2] INFO  com.smartcity.services.TrafficService - Light at Broadway-Park changed to RED
+2025-04-14 10:20:41 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Traffic light set: Light changed successfully
+2025-04-14 10:20:41 [grpc-default-executor-2] INFO  com.smartcity.services.TrafficService - Traffic summary sent: 0 total vehicles, 1 intersections
+2025-04-14 10:20:53 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:20:56 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-2: 84.76445 dB
+2025-04-14 10:21:23 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:21:49 [pool-3-thread-2] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 31 vehicles
+2025-04-14 10:21:53 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:22:04 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Simulated critical noise level in Zone-3: 80.33789 dB
+2025-04-14 10:22:19 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 60 vehicles
+2025-04-14 10:22:23 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:22:26 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 10:22:26 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 10:22:33 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 10:22:33 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 10:22:34 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 10:22:34 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulations immediately
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated traffic data generation
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated bin data generation
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated noise data generation
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Using API key: [VALID KEY]
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: traffic at localhost:50051
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: traffic at localhost:50051 - Service registration updated
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: bin at localhost:50051
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: bin at localhost:50051 - Service registration updated
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50051
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: noise at localhost:50051 - Service registered successfully
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Traffic service not connected - starting simulation
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated traffic data generation
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Bin service not connected - starting simulation
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated bin data generation
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Noise service not connected - starting simulation
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated noise data generation
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:22:47 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:22:47 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-3] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-3] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-3] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-3] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:22:49 [grpc-default-executor-3] INFO  com.smartcity.client.CityDashboard - Service refresh completed
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:22:49 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:22:49 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:22:49 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:23:03 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 89 vehicles
+2025-04-14 10:23:13 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 80 vehicles
+2025-04-14 10:23:15 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-4 with 0 priority bins
+2025-04-14 10:23:15 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated collection route for zone Zone-4 with 3 bins
+2025-04-14 10:23:17 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:23:18 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50051
+2025-04-14 10:23:18 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 10:23:18 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: traffic at localhost:50051
+2025-04-14 10:23:18 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: bin at localhost:50051
+2025-04-14 10:23:26 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-1 with 0 priority bins
+2025-04-14 10:23:26 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated collection route for zone Zone-1 with 1 bins
+2025-04-14 10:23:39 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-1 with 0 priority bins
+2025-04-14 10:23:39 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated collection route for zone Zone-1 with 1 bins
+2025-04-14 10:23:47 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:23:50 [grpc-default-executor-1] INFO  com.smartcity.services.BinService - Route generated for zone Zone-2 with 0 priority bins
+2025-04-14 10:23:50 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Generated simulated collection route for zone Zone-2 with 2 bins
+2025-04-14 10:24:01 [grpc-default-executor-1] INFO  com.smartcity.services.NoiseService - Updated noise thresholds for zone Zone-2: day=70.0 dB, night=55.0 dB
+2025-04-14 10:24:17 [pool-3-thread-3] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:24:23 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 10:24:23 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
+2025-04-14 10:24:24 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Generated simulated bin data for 4 bins
+2025-04-14 10:28:40 [main] INFO  com.smartcity.ServerMain - Initializing service registry...
+2025-04-14 10:28:40 [main] INFO  com.smartcity.services.RegistryService - Registry Service initialized at localhost:50050
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - Registry Server started on port 50050
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - Initializing services...
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: traffic at localhost:50051
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for traffic at localhost:50051
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: bin at localhost:50051
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for bin at localhost:50051
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50053
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.RegistryService - Local registration successful for noise at localhost:50053
+2025-04-14 10:28:41 [main] INFO  com.smartcity.services.NoiseService - NoiseService initialized and registered
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - All services initialized successfully
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - Registry Server running on port 50050
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - Service Server running on port 50051
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - Active Services: Traffic, Bin, Noise
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - Registered Services Count: 3
+2025-04-14 10:28:41 [main] INFO  com.smartcity.ServerMain - ========================================
+2025-04-14 10:28:55 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulations immediately
+2025-04-14 10:28:55 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated traffic data generation
+2025-04-14 10:28:55 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated bin data generation
+2025-04-14 10:28:55 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Starting simulated noise data generation
+2025-04-14 10:28:55 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Using API key: [VALID KEY]
+2025-04-14 10:28:55 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to Registry Service at localhost:50050
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service discovery completed
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: traffic at localhost:50051
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: traffic at localhost:50051 - Service registration updated
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registration updated: bin at localhost:50051
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: bin at localhost:50051 - Service registration updated
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service registered successfully: noise at localhost:50051
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Registered service: noise at localhost:50051 - Service registered successfully
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Traffic service not connected - starting simulation
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated traffic data generation
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Bin service not connected - starting simulation
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated bin data generation
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Noise service not connected - starting simulation
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Starting simulated noise data generation
+2025-04-14 10:28:56 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 10:28:56 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:28:56 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:28:56 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:28:56 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:28:56 [JavaFX Application Thread] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:28:56 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Processing service discovery request for type: ALL
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.services.RegistryService - Service discovery completed for type: ALL
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to noise service at localhost:50053
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Noise service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to traffic service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Traffic service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connecting to bin service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Connected to Bin service at localhost:50051
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.client.CityDashboard - Service refresh completed
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Starting new noise monitoring stream
+2025-04-14 10:28:58 [grpc-default-executor-0] INFO  com.smartcity.services.NoiseService - Noise monitoring stream completed
+2025-04-14 10:29:09 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Light at Main-First changed to YELLOW
+2025-04-14 10:29:09 [pool-3-thread-4] INFO  com.smartcity.client.CityDashboard - Traffic light set: Light changed successfully
+2025-04-14 10:29:09 [grpc-default-executor-0] INFO  com.smartcity.services.TrafficService - Traffic summary sent: 0 total vehicles, 1 intersections
+2025-04-14 10:29:12 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Generated simulated traffic data: 0 vehicles
+2025-04-14 10:29:25 [pool-2-thread-1] WARN  com.smartcity.services.RegistryService - Removing stale service: noise at localhost:50053
+2025-04-14 10:29:26 [pool-3-thread-1] INFO  com.smartcity.client.CityDashboard - Performing periodic service connection check
+2025-04-14 10:29:33 [Thread-0] INFO  com.smartcity.ServerMain - Received shutdown signal
+2025-04-14 10:29:33 [Thread-0] INFO  com.smartcity.ServerMain - Shutting down service server...
