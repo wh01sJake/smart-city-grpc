@@ -8,6 +8,16 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Waste Management Service implementation.
+ * This service monitors waste bin fill levels across the city and
+ * provides functionality for optimizing waste collection routes.
+ *
+ * Features:
+ * - Bin status reporting and tracking
+ * - Collection route optimization
+ * - Urgent collection alerts
+ */
 public class BinService extends BinGrpc.BinImplBase {
     private static final Logger logger = LogManager.getLogger(BinService.class);
     private final Map<String, BinStatus> binStatuses = new ConcurrentHashMap<>();
@@ -18,6 +28,14 @@ public class BinService extends BinGrpc.BinImplBase {
         RegistryService.selfRegister("bin", "localhost:50051");
     }
 
+    /**
+     * Processes a stream of bin status reports from clients.
+     * This method allows clients to report the status of multiple bins in a batch.
+     * It calculates the average fill level across all reported bins.
+     *
+     * @param responseObserver Observer for sending the summary of processed reports
+     * @return StreamObserver for receiving bin status reports
+     */
     @Override
     public StreamObserver<BinStatus> reportBins(StreamObserver<Summary> responseObserver) {
         return new StreamObserver<>() {
@@ -29,10 +47,10 @@ public class BinService extends BinGrpc.BinImplBase {
                 binStatuses.put(status.getBinId(), status);
                 total += status.getFillPercent();
                 count++;
-                
+
                 if (status.getFillPercent() > URGENT_THRESHOLD) {
-                    logger.warn("Urgent collection needed for bin: {} ({}%)", 
-                            status.getBinId(), 
+                    logger.warn("Urgent collection needed for bin: {} ({}%)",
+                            status.getBinId(),
                             status.getFillPercent());
                 }
             }
@@ -55,6 +73,14 @@ public class BinService extends BinGrpc.BinImplBase {
         };
     }
 
+    /**
+     * Generates an optimized collection route for a specific zone.
+     * This method analyzes the current fill levels of all bins and
+     * prioritizes bins with fill levels above the high threshold.
+     *
+     * @param request Zone for which to generate a collection route
+     * @param responseObserver Observer for sending the generated route
+     */
     @Override
     public void getRoute(Zone request, StreamObserver<Route> responseObserver) {
         ArrayList<String> priorityBins = new ArrayList<>();
@@ -63,18 +89,26 @@ public class BinService extends BinGrpc.BinImplBase {
                 priorityBins.add(binId);
             }
         });
-        
+
         Route route = Route.newBuilder()
                 .addAllBins(priorityBins)
                 .build();
-        
+
         responseObserver.onNext(route);
         responseObserver.onCompleted();
-        logger.info("Route generated for zone {} with {} priority bins", 
-                request.getAreaId(), 
+        logger.info("Route generated for zone {} with {} priority bins",
+                request.getAreaId(),
                 priorityBins.size());
     }
 
+    /**
+     * Provides alerts for bins requiring urgent collection.
+     * This method identifies bins with fill levels above the urgent threshold
+     * and streams alerts to the client.
+     *
+     * @param request Empty request (no parameters needed)
+     * @param responseObserver Observer for streaming bin alerts
+     */
     @Override
     public void getUrgentCollections(Empty request, StreamObserver<BinAlert> responseObserver) {
         binStatuses.forEach((binId, status) -> {
@@ -85,8 +119,8 @@ public class BinService extends BinGrpc.BinImplBase {
                         .setUrgentCollection(true)
                         .build();
                 responseObserver.onNext(alert);
-                logger.warn("Urgent collection alert: Bin {} at {}%", 
-                        binId, 
+                logger.warn("Urgent collection alert: Bin {} at {}%",
+                        binId,
                         status.getFillPercent());
             }
         });

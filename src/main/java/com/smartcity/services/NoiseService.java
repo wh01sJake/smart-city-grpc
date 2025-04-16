@@ -9,10 +9,21 @@ import java.time.LocalTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Noise Monitoring Service implementation.
+ * This service monitors noise levels across different zones in the city
+ * and generates alerts when thresholds are exceeded.
+ *
+ * Features:
+ * - Real-time noise level monitoring
+ * - Configurable thresholds for day and night periods
+ * - Critical and non-critical alert classification
+ * - Zone-specific noise management
+ */
 public class NoiseService extends NoiseGrpc.NoiseImplBase {
     private static final Logger logger = LogManager.getLogger(NoiseService.class);
     private final Map<String, NoiseThreshold> zoneThresholds = new ConcurrentHashMap<>();
-    
+
     // Default thresholds if not set for a zone
     private static final float DEFAULT_DAY_LIMIT = 70.0f;   // 70 dB during day
     private static final float DEFAULT_NIGHT_LIMIT = 55.0f; // 55 dB during night
@@ -25,19 +36,27 @@ public class NoiseService extends NoiseGrpc.NoiseImplBase {
         logger.info("NoiseService initialized and registered");
     }
 
+    /**
+     * Monitors noise levels and generates alerts when thresholds are exceeded.
+     * This method implements bidirectional streaming, receiving noise measurements
+     * from clients and sending back alerts when thresholds are exceeded.
+     *
+     * @param responseObserver Observer for sending alerts back to the client
+     * @return StreamObserver for receiving noise data from the client
+     */
     @Override
     public StreamObserver<NoiseData> monitorNoise(final StreamObserver<Alert> responseObserver) {
         logger.info("Starting new noise monitoring stream");
-        
+
         return new StreamObserver<NoiseData>() {
             @Override
             public void onNext(NoiseData data) {
                 try {
                     // Get the zone ID from the sensor ID (assuming format: zone_sensorNumber)
                     String zoneId = data.getSensorId().split("_")[0];
-                    
+
                     // Get threshold for the zone, or use default
-                    NoiseThreshold threshold = zoneThresholds.getOrDefault(zoneId, 
+                    NoiseThreshold threshold = zoneThresholds.getOrDefault(zoneId,
                             NoiseThreshold.newBuilder()
                                     .setDayLimit(DEFAULT_DAY_LIMIT)
                                     .setNightLimit(DEFAULT_NIGHT_LIMIT)
@@ -57,9 +76,9 @@ public class NoiseService extends NoiseGrpc.NoiseImplBase {
                                         zoneId, data.getDecibels(), currentLimit, timeContext))
                                 .setIsCritical(data.getDecibels() > currentLimit + 10) // Critical if exceeds by 10dB
                                 .build();
-                        
+
                         responseObserver.onNext(alert);
-                        
+
                         if (alert.getIsCritical()) {
                             logger.warn("Critical noise level in zone {}: {} dB", zoneId, data.getDecibels());
                         } else {
@@ -95,6 +114,14 @@ public class NoiseService extends NoiseGrpc.NoiseImplBase {
         };
     }
 
+    /**
+     * Sets noise thresholds for a specific zone.
+     * This method configures the maximum allowed noise levels for day and night periods.
+     * It performs validation to ensure thresholds are reasonable and consistent.
+     *
+     * @param request Threshold configuration with zone ID, day limit, and night limit
+     * @param responseObserver Observer for sending the operation result
+     */
     @Override
     public void setZoneThreshold(NoiseThreshold request, StreamObserver<Response> responseObserver) {
         try {
@@ -111,14 +138,14 @@ public class NoiseService extends NoiseGrpc.NoiseImplBase {
 
             // Store the threshold
             zoneThresholds.put(request.getZoneId(), request);
-            
+
             logger.info("Updated noise thresholds for zone {}: day={} dB, night={} dB",
                     request.getZoneId(), request.getDayLimit(), request.getNightLimit());
 
             Response response = Response.newBuilder()
                     .setStatus(String.format("Thresholds updated for zone %s", request.getZoneId()))
                     .build();
-            
+
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 

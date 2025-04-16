@@ -12,12 +12,27 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Registry Service implementation that provides service discovery and registration.
+ * This service acts as the central hub for all other services in the system,
+ * allowing them to register themselves and be discovered by clients.
+ *
+ * Features:
+ * - Service registration with automatic heartbeat tracking
+ * - Service discovery with optional filtering by service type
+ * - Automatic cleanup of stale services
+ * - Thread-safe implementation for concurrent access
+ */
 public class RegistryService extends RegistryGrpc.RegistryImplBase {
     private static final Logger logger = LogManager.getLogger(RegistryService.class);
     private static final String REGISTRY_ADDRESS = "localhost:50050";
     private static final long SERVICE_TIMEOUT_SECONDS = 30;
     private static final long CLEANUP_INTERVAL_SECONDS = 15;
 
+    /**
+     * Inner class representing a registered service with heartbeat tracking.
+     * Each service entry contains the service information and tracks when it was last seen.
+     */
     private static class ServiceEntry {
         final ServiceInfo info;
         volatile Instant lastHeartbeat;
@@ -39,7 +54,7 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
     private final Map<String, ServiceEntry> services = new ConcurrentHashMap<>();
     private final ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor();
     private final AtomicBoolean isRunning = new AtomicBoolean(true);
-    
+
     // Static registry instance for self-registration
     private static volatile RegistryService instance;
 
@@ -49,6 +64,11 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
         logger.info("Registry Service initialized at {}", REGISTRY_ADDRESS);
     }
 
+    /**
+     * Starts a background task that periodically removes stale services.
+     * This ensures that services that have crashed or stopped responding are
+     * automatically removed from the registry.
+     */
     private void startCleanupTask() {
         cleanupExecutor.scheduleAtFixedRate(() -> {
             if (!isRunning.get()) {
@@ -65,7 +85,7 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
     private void cleanupStaleServices() {
         services.entrySet().removeIf(entry -> {
             if (entry.getValue().isStale()) {
-                logger.warn("Removing stale service: {} at {}", 
+                logger.warn("Removing stale service: {} at {}",
                     entry.getValue().info.getServiceType(),
                     entry.getValue().info.getAddress());
                 return true;
@@ -74,6 +94,14 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
         });
     }
 
+    /**
+     * Registers a service with the registry.
+     * This method is called by services when they start up to make themselves discoverable.
+     * If a service with the same key already exists, its registration is updated.
+     *
+     * @param request The service information to register
+     * @param responseObserver Observer for sending the registration confirmation
+     */
     @Override
     public void register(ServiceInfo request, StreamObserver<Confirmation> responseObserver) {
         try {
@@ -87,8 +115,8 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
             String serviceKey = generateServiceKey(request);
             ServiceEntry existing = services.put(serviceKey, entry);
 
-            String status = existing == null ? 
-                "Service registered successfully" : 
+            String status = existing == null ?
+                "Service registered successfully" :
                 "Service registration updated";
 
             logger.info("{}: {} at {}", status, request.getServiceType(), request.getAddress());
@@ -108,11 +136,19 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
         return String.format("%s@%s", info.getServiceType(), info.getAddress());
     }
 
+    /**
+     * Discovers services registered with the registry.
+     * This method is called by clients to find available services.
+     * It streams back information about all non-stale services that match the filter.
+     *
+     * @param request Filter specifying which service types to discover (empty returns all)
+     * @param responseObserver Observer for streaming back discovered services
+     */
     @Override
     public void discoverServices(ServiceFilter request, StreamObserver<ServiceInfo> responseObserver) {
         try {
             String serviceType = request.getServiceType();
-            logger.info("Processing service discovery request for type: {}", 
+            logger.info("Processing service discovery request for type: {}",
                 serviceType.isEmpty() ? "ALL" : serviceType);
 
             services.values().stream()
@@ -120,13 +156,13 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
                 .filter(entry -> serviceType.isEmpty() || entry.info.getServiceType().equals(serviceType))
                 .forEach(entry -> {
                     responseObserver.onNext(entry.info);
-                    logger.debug("Discovered service: {} at {}", 
-                        entry.info.getServiceType(), 
+                    logger.debug("Discovered service: {} at {}",
+                        entry.info.getServiceType(),
                         entry.info.getAddress());
                 });
 
             responseObserver.onCompleted();
-            logger.info("Service discovery completed for type: {}", 
+            logger.info("Service discovery completed for type: {}",
                 serviceType.isEmpty() ? "ALL" : serviceType);
 
         } catch (Exception e) {
@@ -135,6 +171,15 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
         }
     }
 
+    /**
+     * Registers a service with the registry.
+     * This static method is used by services to register themselves.
+     * It first tries to register locally if the registry is in the same JVM,
+     * then falls back to remote registration if needed.
+     *
+     * @param serviceType The type of service being registered
+     * @param address The network address where the service is running
+     */
     public static void selfRegister(String serviceType, String address) {
         String serviceId = serviceType + "_" + System.currentTimeMillis();
         ServiceInfo info = ServiceInfo.newBuilder()
@@ -178,9 +223,9 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
                 .build();
 
             RegistryGrpc.RegistryBlockingStub stub = RegistryGrpc.newBlockingStub(channel);
-            
+
             Confirmation confirmation = stub.register(info);
-            logger.info("Remote registration successful for {} at {}: {}", 
+            logger.info("Remote registration successful for {} at {}: {}",
                 serviceType, address, confirmation.getStatus());
 
         } catch (Exception e) {
@@ -201,6 +246,11 @@ public class RegistryService extends RegistryGrpc.RegistryImplBase {
         }
     }
 
+    /**
+     * Shuts down the registry service.
+     * This method stops the cleanup task, clears all registered services,
+     * and resets the singleton instance.
+     */
     public void shutdown() {
         isRunning.set(false);
         try {
