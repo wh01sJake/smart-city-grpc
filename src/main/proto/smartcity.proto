@@ -3,108 +3,192 @@ option java_package = "com.smartcity";
 option java_multiple_files = true;
 
 // ====== Common Messages ======
+
+/**
+ * Confirmation message returned after service registration
+ */
 message Confirmation {
-  string status = 1;
+  string status = 1;  // Status message indicating success or failure
 }
 
+/**
+ * Filter for discovering specific types of services
+ */
 message ServiceFilter {
-  string service_type = 1;
+  string service_type = 1;  // Type of service to filter for (empty returns all)
 }
 
+/**
+ * Information about a registered service
+ */
 message ServiceInfo {
-  string service_type = 1;
-  string service_id = 2;
-  string address = 3;
+  string service_type = 1;  // Type of service (traffic, bin, noise)
+  string service_id = 2;    // Unique identifier for the service instance
+  string address = 3;       // Network address where the service is running
 }
 
+/**
+ * Generic response message
+ */
 message Response {
-  string status = 1;
+  string status = 1;  // Status message indicating success or failure
 }
 
+/**
+ * Empty message for RPCs that don't require parameters
+ */
 message Empty {}
 
 // ====== Traffic Service ======
+
+/**
+ * Command to set a traffic light color at a specific intersection
+ */
 message LightCommand {
-  string intersection = 1;
-  string color = 2;  // RED/YELLOW/GREEN
+  string intersection = 1;  // Intersection identifier (e.g., "Main-First")
+  string color = 2;        // Traffic light color (RED/YELLOW/GREEN)
 }
 
+/**
+ * Real-time traffic data for streaming updates
+ */
 message TrafficData {
-  int32 vehicle_count = 1;
-  string timestamp = 2;
+  int32 vehicle_count = 1;  // Number of vehicles detected in current period
+  string timestamp = 2;     // Time when the measurement was taken
 }
 
+/**
+ * Current status of a traffic intersection
+ */
 message IntersectionStatus {
-  string intersection_id = 1;
-  string current_color = 2;
-  int32 waiting_vehicles = 3;
+  string intersection_id = 1;   // Intersection identifier
+  string current_color = 2;     // Current traffic light color
+  int32 waiting_vehicles = 3;   // Number of vehicles waiting at the intersection
 }
 
+/**
+ * Summary of traffic conditions across all intersections
+ */
 message TrafficSummary {
-  int32 total_vehicles = 1;
-  repeated IntersectionStatus intersections = 2;
+  int32 total_vehicles = 1;                    // Total vehicles counted
+  repeated IntersectionStatus intersections = 2;  // Status of each intersection
 }
 
+/**
+ * Traffic management service for controlling traffic lights and monitoring traffic flow
+ */
 service Traffic {
+  // Set traffic light color at a specific intersection
   rpc SetLight(LightCommand) returns (Response);
+
+  // Stream real-time traffic data updates
   rpc StreamTraffic(Empty) returns (stream TrafficData);
+
+  // Get a summary of current traffic conditions
   rpc GetTrafficSummary(Empty) returns (TrafficSummary);
 }
 
 // ====== Bin Service ======
+
+/**
+ * Current status of a waste bin
+ */
 message BinStatus {
-  string bin_id = 1;
-  int32 fill_percent = 2;
+  string bin_id = 1;       // Unique identifier for the bin
+  int32 fill_percent = 2;   // Current fill level as a percentage (0-100)
 }
 
+/**
+ * Statistical summary of bin fill levels
+ */
 message Summary {
-  float average = 1;
+  float average = 1;  // Average fill percentage across reported bins
 }
 
+/**
+ * Geographical zone for waste collection planning
+ */
 message Zone {
-  string area_id = 1;
+  string area_id = 1;  // Identifier for the zone (e.g., "Zone-1")
 }
 
+/**
+ * Collection route with ordered list of bins
+ */
 message Route {
-  repeated string bins = 1;
+  repeated string bins = 1;  // List of bin IDs in recommended collection order
 }
 
+/**
+ * Alert for bins requiring attention
+ */
 message BinAlert {
-  string bin_id = 1;
-  int32 fill_percent = 2;
-  bool urgent_collection = 3;
+  string bin_id = 1;           // Identifier of the bin requiring collection
+  int32 fill_percent = 2;       // Current fill percentage
+  bool urgent_collection = 3;   // Flag indicating urgent collection is needed
 }
 
+/**
+ * Waste management service for monitoring bin fill levels and optimizing collection routes
+ */
 service Bin {
+  // Report status of multiple bins in a batch
   rpc ReportBins(stream BinStatus) returns (Summary);
+
+  // Get optimized collection route for a specific zone
   rpc GetRoute(Zone) returns (Route);
+
+  // Stream alerts for bins requiring urgent collection
   rpc GetUrgentCollections(Empty) returns (stream BinAlert);
 }
 
 // ====== Noise Service ======
+
+/**
+ * Noise level measurement from a sensor
+ */
 message NoiseData {
-  string sensor_id = 1;
-  float decibels = 2;
+  string sensor_id = 1;  // Identifier of the noise sensor (format: "zone_sensorNumber")
+  float decibels = 2;    // Measured noise level in decibels (dB)
 }
 
+/**
+ * Noise level alert notification
+ */
 message Alert {
-  string message = 1;
-  bool is_critical = 2;
+  string message = 1;     // Detailed message describing the noise alert
+  bool is_critical = 2;   // Flag indicating whether the alert is critical (exceeds threshold by 10+ dB)
 }
 
+/**
+ * Configuration for acceptable noise levels by zone and time
+ */
 message NoiseThreshold {
-  float day_limit = 1;
-  float night_limit = 2;
-  string zone_id = 3;
+  float day_limit = 1;    // Maximum allowed noise level during daytime (in dB)
+  float night_limit = 2;  // Maximum allowed noise level during nighttime (in dB)
+  string zone_id = 3;     // Identifier of the zone to configure
 }
 
+/**
+ * Noise monitoring service for measuring noise levels and generating alerts
+ */
 service Noise {
+  // Bidirectional stream for noise monitoring and alerting
   rpc MonitorNoise(stream NoiseData) returns (stream Alert);
+
+  // Configure noise thresholds for a specific zone
   rpc SetZoneThreshold(NoiseThreshold) returns (Response);
 }
 
 // ====== Registry Service ======
+
+/**
+ * Service registry for service discovery and registration
+ */
 service Registry {
+  // Register a service with the registry
   rpc Register(ServiceInfo) returns (Confirmation);
+
+  // Discover available services, optionally filtered by type
   rpc DiscoverServices(ServiceFilter) returns (stream ServiceInfo);
 }
